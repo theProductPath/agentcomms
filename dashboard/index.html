@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgentComms · theProductPath</title>
+<style>
+  /* ─── Reset & Base ─────────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:        #0f1117;
+    --bg2:       #1a1d27;
+    --bg3:       #22263a;
+    --border:    #2e3352;
+    --text:      #e2e8f0;
+    --muted:     #7c8db0;
+    --amber:     #f59e0b;
+    --amber-dim: #78350f;
+    --indigo:    #6366f1;
+    --green:     #22c55e;
+    --red:       #ef4444;
+    --gray:      #6b7280;
+    --radius:    8px;
+    --panel-w:   300px;
+    --shelf-h:   260px;
+    --header-h:  52px;
+    --stats-h:   72px;
+  }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font: 13px/1.5 'Inter', system-ui, sans-serif; overflow: hidden; }
+  a { color: inherit; text-decoration: none; }
+  button { cursor: pointer; background: none; border: none; color: inherit; font: inherit; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ─── Layout Shell ─────────────────────────────────────────────────── */
+  #app { display: flex; flex-direction: column; height: 100vh; }
+
+  /* ─── Header ───────────────────────────────────────────────────────── */
+  #header {
+    height: var(--header-h);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+    flex-shrink: 0;
+    gap: 12px;
+  }
+  .logo { font-weight: 700; font-size: 14px; letter-spacing: .02em; }
+  .logo span { color: var(--muted); font-weight: 400; }
+  #live-indicator {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; color: var(--muted);
+  }
+  .live-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--green);
+  }
+  .live-dot.disconnected { background: var(--red); }
+  @keyframes pulse-live { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .live-dot.connected { animation: pulse-live 2s infinite; }
+
+  /* ─── Stats Bar ─────────────────────────────────────────────────────── */
+  #stats-bar {
+    display: flex; gap: 1px;
+    background: var(--border);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .stat-card {
+    flex: 1; padding: 12px 16px;
+    background: var(--bg2);
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+  .stat-value { font-size: 22px; font-weight: 700; line-height: 1; }
+  .stat-value.amber  { color: var(--amber); }
+  .stat-value.indigo { color: var(--indigo); }
+  .stat-value.muted  { color: var(--muted); }
+
+  /* ─── Body (agents + main) ─────────────────────────────────────────── */
+  #body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* ─── Agents Panel ─────────────────────────────────────────────────── */
+  #agents-panel {
+    width: var(--panel-w);
+    flex-shrink: 0;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .panel-header {
+    padding: 10px 12px 8px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .panel-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+  .filter-pills { display: flex; gap: 4px; }
+  .pill {
+    padding: 3px 8px; border-radius: 100px; font-size: 11px;
+    background: transparent; border: 1px solid var(--border); color: var(--muted);
+    transition: all .15s;
+  }
+  .pill.active { background: var(--indigo); border-color: var(--indigo); color: #fff; }
+  #agents-list { overflow-y: auto; flex: 1; padding: 6px; display: flex; flex-direction: column; gap: 4px; }
+  .empty-state { padding: 20px 16px; color: var(--muted); font-size: 12px; text-align: center; }
+
+  .agent-card {
+    padding: 10px 12px; border-radius: var(--radius);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+    background: var(--bg3);
+  }
+  .agent-card:hover { border-color: var(--indigo); background: #1d2236; }
+  .agent-card.selected { border-color: var(--indigo); background: #1d2236; }
+  .agent-card.has-inbox {
+    border-color: var(--amber);
+    background: #1d1a0f;
+  }
+  @keyframes glow-amber { 0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.3)} 50%{box-shadow:0 0 8px 2px rgba(245,158,11,.2)} }
+  .agent-card.has-inbox { animation: glow-amber 2.5s infinite; }
+  .agent-card.has-inbox:hover, .agent-card.has-inbox.selected { animation: none; box-shadow: 0 0 0 2px var(--amber); }
+
+  .agent-top { display: flex; align-items: center; gap: 8px; }
+  .agent-emoji-wrap { position: relative; font-size: 20px; line-height: 1; flex-shrink: 0; }
+  .inbox-badge {
+    position: absolute; top: -4px; right: -6px;
+    background: var(--amber); color: #000;
+    font-size: 9px; font-weight: 700;
+    padding: 1px 4px; border-radius: 100px;
+    line-height: 1.4;
+  }
+  .agent-name { font-weight: 600; font-size: 13px; flex: 1; }
+  .agent-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--gray); flex-shrink: 0;
+  }
+  .agent-dot.active { background: var(--green); }
+  @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.3} }
+  .agent-dot.inbox { background: var(--amber); animation: pulse-dot 1.5s infinite; }
+
+  .agent-meta { margin-top: 6px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .agent-time { font-size: 11px; color: var(--muted); flex: 1; }
+  .tag {
+    font-size: 10px; padding: 2px 6px; border-radius: 100px;
+    background: var(--bg); border: 1px solid var(--border); color: var(--muted);
+  }
+  .tag.inbox-tag { background: rgba(245,158,11,.15); border-color: var(--amber); color: var(--amber); }
+
+  /* ─── Inbox Panel (slide-in) ────────────────────────────────────────── */
+  #inbox-panel {
+    position: absolute; left: var(--panel-w); top: 0; bottom: 0;
+    width: var(--panel-w);
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    transform: translateX(-100%);
+    transition: transform .2s ease;
+    z-index: 10;
+    overflow: hidden;
+  }
+  #inbox-panel.open { transform: translateX(0); }
+  #inbox-panel .panel-header { flex-shrink: 0; }
+  #inbox-panel-content { overflow-y: auto; flex: 1; padding: 8px; display: flex; flex-direction: column; gap: 8px; }
+  .inbox-section-label {
+    font-size: 10px; text-transform: uppercase; letter-spacing: .08em;
+    color: var(--muted); padding: 4px 4px 2px;
+  }
+  .inbox-file-card {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden; cursor: pointer;
+    transition: border-color .15s;
+  }
+  .inbox-file-card:hover { border-color: var(--amber); }
+  .inbox-file-card.unread { border-color: rgba(245,158,11,.5); }
+  .inbox-file-header {
+    padding: 8px 10px;
+    display: flex; align-items: center; justify-content: space-between; gap: 6px;
+  }
+  .inbox-file-name { font-size: 11px; font-weight: 600; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .inbox-file-hint { font-size: 10px; color: var(--muted); white-space: nowrap; }
+  .inbox-file-content {
+    border-top: 1px solid var(--border);
+    padding: 10px;
+    font-size: 11px; line-height: 1.6;
+    font-family: 'Menlo', 'Monaco', monospace;
+    white-space: pre-wrap; word-break: break-word;
+    color: var(--text);
+    background: var(--bg);
+    max-height: 260px; overflow-y: auto;
+    display: none;
+  }
+  .inbox-file-content.visible { display: block; }
+
+  .processed-list { display: flex; flex-direction: column; gap: 2px; }
+  .processed-item { font-size: 11px; color: var(--muted); padding: 3px 4px; }
+  .clear-inbox { display: flex; align-items: center; gap: 6px; color: var(--green); font-size: 12px; padding: 8px 4px; }
+
+  /* ─── Main Content ──────────────────────────────────────────────────── */
+  #main {
+    flex: 1;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    transition: padding-left .2s ease;
+  }
+  #main.inbox-open { padding-left: var(--panel-w); }
+
+  /* ─── Main Toolbar ──────────────────────────────────────────────────── */
+  #main-toolbar {
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+    flex-shrink: 0;
+    background: var(--bg2);
+  }
+  .view-toggle {
+    display: flex; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-left: auto;
+  }
+  .view-btn {
+    padding: 4px 10px; font-size: 11px; color: var(--muted);
+    transition: background .15s, color .15s;
+    border: none;
+  }
+  .view-btn.active { background: var(--indigo); color: #fff; }
+  .view-btn:not(.active):hover { background: var(--bg3); }
+
+  /* ─── Threads Table ─────────────────────────────────────────────────── */
+  #threads-view { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+  #threads-table-wrap { flex: 1; overflow-y: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  thead { position: sticky; top: 0; background: var(--bg2); z-index: 2; }
+  th {
+    padding: 8px 12px; text-align: left;
+    font-size: 10px; text-transform: uppercase; letter-spacing: .08em;
+    color: var(--muted); border-bottom: 1px solid var(--border);
+    white-space: nowrap; user-select: none;
+  }
+  th.sortable { cursor: pointer; }
+  th.sortable:hover { color: var(--text); }
+  .sort-arrow { margin-left: 3px; opacity: .6; }
+  td { padding: 9px 12px; border-bottom: 1px solid var(--border); font-size: 12px; vertical-align: middle; }
+  tr.thread-row { cursor: pointer; transition: background .1s; }
+  tr.thread-row:hover { background: var(--bg3); }
+  tr.thread-row.selected { background: #1d2236; }
+  td.thread-name { font-weight: 500; }
+  .thread-slug { color: var(--muted); font-size: 11px; display: block; font-family: monospace; }
+
+  .status-pill {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 2px 8px; border-radius: 100px; font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .05em; white-space: nowrap;
+  }
+  .status-open        { background: rgba(99,102,241,.2); color: var(--indigo); border: 1px solid rgba(99,102,241,.4); }
+  .status-in-progress { background: rgba(245,158,11,.2); color: var(--amber);  border: 1px solid rgba(245,158,11,.4); }
+  .status-blocked     { background: rgba(239,68,68,.2);  color: var(--red);    border: 1px solid rgba(239,68,68,.4); }
+  .status-done        { background: rgba(34,197,94,.2);  color: var(--green);  border: 1px solid rgba(34,197,94,.4); }
+  .status-archived    { background: rgba(107,114,128,.2); color: var(--gray);  border: 1px solid rgba(107,114,128,.4); }
+  .status-unknown     { background: rgba(107,114,128,.15); color: var(--muted); border: 1px solid var(--border); }
+
+  .agent-chips { display: flex; flex-wrap: wrap; gap: 3px; }
+  .agent-chip {
+    font-size: 10px; padding: 1px 6px; border-radius: 100px;
+    background: var(--bg3); border: 1px solid var(--border); color: var(--muted);
+  }
+
+  td.col-date    { width: 82px; color: var(--muted); font-size: 11px; white-space: nowrap; }
+  td.col-status  { width: 110px; }
+  td.col-agents  { width: 145px; }
+  td.col-updated { width: 58px; color: var(--muted); font-size: 11px; white-space: nowrap; }
+  .no-threads-row td { color: var(--muted); font-size: 12px; padding: 24px 16px; text-align: center; }
+
+  /* ─── Thread Detail Shelf ───────────────────────────────────────────── */
+  #thread-shelf {
+    border-top: 1px solid var(--border);
+    background: var(--bg2);
+    flex-shrink: 0;
+    overflow: hidden;
+    transition: height .2s ease;
+    height: 0;
+  }
+  #thread-shelf.open { height: var(--shelf-h); }
+  .shelf-header {
+    padding: 8px 14px;
+    display: flex; align-items: center; gap: 10px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer; user-select: none;
+  }
+  .shelf-title { font-weight: 600; font-size: 13px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .shelf-close { color: var(--muted); font-size: 16px; line-height: 1; }
+  .shelf-body {
+    display: flex; gap: 0;
+    height: calc(var(--shelf-h) - 37px);
+    overflow: hidden;
+  }
+  .shelf-col {
+    flex: 1; padding: 10px 14px; overflow-y: auto;
+    border-right: 1px solid var(--border);
+  }
+  .shelf-col:last-child { border-right: none; }
+  .shelf-col-label { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 8px; }
+
+  .shelf-info-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 12px; }
+  .shelf-info-key { color: var(--muted); width: 72px; flex-shrink: 0; }
+
+  .shelf-file-list { display: flex; flex-direction: column; gap: 3px; }
+  .shelf-file-item {
+    display: flex; align-items: center; gap: 6px; padding: 4px 6px;
+    border-radius: 4px; font-size: 11px; cursor: pointer;
+    transition: background .1s;
+  }
+  .shelf-file-item:hover { background: var(--bg3); }
+  .shelf-file-item.active { background: var(--bg3); color: var(--indigo); }
+  .shelf-file-icon { color: var(--muted); }
+
+  /* File viewer (slides into shelf) */
+  #file-viewer {
+    width: 320px; flex-shrink: 0;
+    border-left: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    background: var(--bg);
+  }
+  .file-viewer-header {
+    padding: 6px 10px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+  }
+  .file-viewer-name { font-size: 11px; font-weight: 600; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .file-viewer-body {
+    flex: 1; overflow-y: auto; padding: 10px;
+    font-size: 11px; line-height: 1.7;
+    font-family: 'Menlo', 'Monaco', monospace;
+    white-space: pre-wrap; word-break: break-word;
+    color: var(--text);
+  }
+
+  /* ─── Map View ──────────────────────────────────────────────────────── */
+  #map-view {
+    flex: 1; display: none; position: relative; overflow: hidden;
+  }
+  #map-view.active { display: flex; align-items: center; justify-content: center; }
+  #map-canvas { display: block; }
+  #map-legend {
+    position: absolute; bottom: 12px; left: 14px;
+    background: rgba(15,17,23,.85); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 8px 12px;
+    font-size: 11px; color: var(--muted);
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .legend-row { display: flex; align-items: center; gap: 6px; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .legend-line { width: 18px; height: 2px; border-radius: 1px; flex-shrink: 0; }
+
+  /* ─── Misc ──────────────────────────────────────────────────────────── */
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Header -->
+  <header id="header">
+    <div class="logo">AgentComms <span>· theProductPath</span></div>
+    <div id="live-indicator">
+      <div class="live-dot" id="live-dot"></div>
+      <span id="live-text">Connecting…</span>
+    </div>
+  </header>
+
+  <!-- Stats Bar -->
+  <div id="stats-bar">
+    <div class="stat-card">
+      <div class="stat-label">Agents Active</div>
+      <div class="stat-value amber" id="stat-agents">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">In Flight</div>
+      <div class="stat-value amber" id="stat-inflight">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Threads Open</div>
+      <div class="stat-value indigo" id="stat-threads">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Archived</div>
+      <div class="stat-value muted" id="stat-archived">0</div>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div id="body">
+
+    <!-- Agents Panel -->
+    <div id="agents-panel">
+      <div class="panel-header">
+        <div class="panel-title">Agents</div>
+        <div class="filter-pills">
+          <button class="pill active" id="filter-active-agents" onclick="setAgentFilter('active')">Active</button>
+          <button class="pill" id="filter-all-agents" onclick="setAgentFilter('all')">All</button>
+        </div>
+      </div>
+      <div id="agents-list"></div>
+    </div>
+
+    <!-- Inbox Panel (slide-in) -->
+    <div id="inbox-panel">
+      <div class="panel-header">
+        <div class="panel-title" id="inbox-panel-title">Inbox</div>
+        <button onclick="closeInboxPanel()" style="color:var(--muted);font-size:18px;line-height:1;">×</button>
+      </div>
+      <div id="inbox-panel-content"></div>
+    </div>
+
+    <!-- Main -->
+    <div id="main">
+      <!-- Main Toolbar -->
+      <div id="main-toolbar">
+        <div class="filter-pills">
+          <button class="pill active" id="filter-active-threads" onclick="setThreadFilter('active')">Active</button>
+          <button class="pill" id="filter-all-threads" onclick="setThreadFilter('all')">All</button>
+        </div>
+        <div class="view-toggle">
+          <button class="view-btn active" id="btn-list" onclick="setView('list')">≡ List</button>
+          <button class="view-btn" id="btn-map" onclick="setView('map')">◉ Map</button>
+        </div>
+      </div>
+
+      <!-- Threads View -->
+      <div id="threads-view">
+        <div id="threads-table-wrap">
+          <table id="threads-table">
+            <thead>
+              <tr>
+                <th>Thread</th>
+                <th class="col-date sortable" onclick="sortBy('date')">Date <span class="sort-arrow" id="sort-date"></span></th>
+                <th class="col-status sortable" onclick="sortBy('status')">Status <span class="sort-arrow" id="sort-status"></span></th>
+                <th class="col-agents">Agents</th>
+                <th class="col-updated sortable" onclick="sortBy('updated')">Updated <span class="sort-arrow" id="sort-updated"></span></th>
+              </tr>
+            </thead>
+            <tbody id="threads-tbody"></tbody>
+          </table>
+        </div>
+
+        <!-- Thread Detail Shelf -->
+        <div id="thread-shelf">
+          <div class="shelf-header" onclick="toggleShelf()">
+            <div class="shelf-title" id="shelf-title">Thread details</div>
+            <div class="shelf-close">›</div>
+          </div>
+          <div class="shelf-body">
+            <div class="shelf-col" id="shelf-info">
+              <div class="shelf-col-label">Thread Info</div>
+              <div id="shelf-info-content"></div>
+            </div>
+            <div class="shelf-col" id="shelf-files">
+              <div class="shelf-col-label">Files</div>
+              <div class="shelf-file-list" id="shelf-file-list"></div>
+            </div>
+            <div class="shelf-col" id="shelf-agents">
+              <div class="shelf-col-label">Agents</div>
+              <div class="agent-chips" id="shelf-agents-content"></div>
+            </div>
+            <div id="file-viewer" class="hidden">
+              <div class="file-viewer-header">
+                <div class="file-viewer-name" id="file-viewer-name"></div>
+                <button onclick="closeFileViewer()" style="color:var(--muted);font-size:16px;line-height:1;">×</button>
+              </div>
+              <div class="file-viewer-body" id="file-viewer-body">Loading…</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Map View -->
+      <div id="map-view">
+        <canvas id="map-canvas"></canvas>
+        <div id="map-legend">
+          <div class="legend-row"><div class="legend-dot" style="background:var(--amber)"></div> Has inbox</div>
+          <div class="legend-row"><div class="legend-dot" style="background:var(--green)"></div> Active</div>
+          <div class="legend-row"><div class="legend-dot" style="background:var(--gray)"></div> Quiet</div>
+          <div class="legend-row"><div class="legend-line" style="background:var(--amber)"></div> In-progress thread</div>
+          <div class="legend-row"><div class="legend-line" style="background:var(--indigo)"></div> Open/active thread</div>
+          <div class="legend-row"><div class="legend-line" style="background:var(--gray)"></div> Done/archived thread</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ─── State ──────────────────────────────────────────────────────────────────
+let state         = { agents: [], threads: [], stats: { activeAgents: 0, inFlight: 0, threadsOpen: 0, archived: 0 } };
+let agentFilter   = 'active'; // 'active' | 'all'
+let threadFilter  = 'active'; // 'active' | 'all'
+let currentView   = 'list';   // 'list' | 'map'
+let sortKey       = 'updated';
+let sortDir       = -1;       // -1 = desc, 1 = asc
+let selectedAgent = null;
+let selectedThread = null;
+let openFileCards  = new Set();
+
+// ─── SSE Connection ─────────────────────────────────────────────────────────
+let evtSource;
+function connectSSE() {
+  evtSource = new EventSource('/events');
+  evtSource.onopen = () => {
+    const dot  = document.getElementById('live-dot');
+    const text = document.getElementById('live-text');
+    dot.className  = 'live-dot connected';
+    text.textContent = 'Live';
+  };
+  evtSource.onmessage = (e) => {
+    try {
+      state = JSON.parse(e.data);
+      render();
+    } catch (_) {}
+  };
+  evtSource.onerror = () => {
+    const dot  = document.getElementById('live-dot');
+    const text = document.getElementById('live-text');
+    dot.className  = 'live-dot disconnected';
+    text.textContent = 'Reconnecting…';
+    evtSource.close();
+    setTimeout(connectSSE, 3000);
+  };
+}
+
+// ─── Render Entry ────────────────────────────────────────────────────────────
+function render() {
+  renderStats();
+  renderAgents();
+  renderThreads();
+  if (currentView === 'map') drawMap();
+}
+
+// ─── Stats ───────────────────────────────────────────────────────────────────
+function renderStats() {
+  const s = state.stats;
+  document.getElementById('stat-agents').textContent   = s.activeAgents;
+  document.getElementById('stat-inflight').textContent = s.inFlight;
+  document.getElementById('stat-threads').textContent  = s.threadsOpen;
+  document.getElementById('stat-archived').textContent = s.archived;
+}
+
+// ─── Agents ──────────────────────────────────────────────────────────────────
+function setAgentFilter(f) {
+  agentFilter = f;
+  document.getElementById('filter-active-agents').className = 'pill' + (f === 'active' ? ' active' : '');
+  document.getElementById('filter-all-agents').className    = 'pill' + (f === 'all'    ? ' active' : '');
+  renderAgents();
+}
+
+function renderAgents() {
+  const list = document.getElementById('agents-list');
+  let agents = state.agents.slice();
+
+  if (agentFilter === 'active') {
+    agents = agents.filter(a => a.isActive || a.inboxCount > 0);
+  }
+
+  // Sort: inbox-first, then lastMtime desc
+  agents.sort((a, b) => {
+    if (b.inboxCount !== a.inboxCount) return b.inboxCount - a.inboxCount;
+    return b.lastMtime - a.lastMtime;
+  });
+
+  if (agents.length === 0) {
+    list.innerHTML = '<div class="empty-state">No active agents</div>';
+    return;
+  }
+
+  list.innerHTML = agents.map(a => {
+    const hasInbox  = a.inboxCount > 0;
+    const isActive  = a.isActive;
+    const dotClass  = hasInbox ? 'inbox' : (isActive ? 'active' : '');
+    const cardClass = hasInbox ? 'has-inbox' : '';
+    const sel       = selectedAgent === a.name ? ' selected' : '';
+
+    return `<div class="agent-card ${cardClass}${sel}" onclick="selectAgent('${a.name}')">
+      <div class="agent-top">
+        <div class="agent-emoji-wrap">
+          <span>${a.emoji}</span>
+          ${hasInbox ? `<div class="inbox-badge">${a.inboxCount}</div>` : ''}
+        </div>
+        <div class="agent-name">${a.name}</div>
+        <div class="agent-dot ${dotClass}"></div>
+      </div>
+      <div class="agent-meta">
+        <div class="agent-time">${a.lastActive}</div>
+        ${hasInbox    ? `<div class="tag inbox-tag">📬${a.inboxCount}</div>` : ''}
+        ${a.processedCount > 0 ? `<div class="tag">✓${a.processedCount}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selectAgent(name) {
+  if (selectedAgent === name) {
+    closeInboxPanel();
+    return;
+  }
+  selectedAgent = name;
+  renderAgents();
+  openInboxPanel(name);
+}
+
+function openInboxPanel(name) {
+  const agent = state.agents.find(a => a.name === name);
+  if (!agent) return;
+
+  document.getElementById('inbox-panel-title').textContent = `${agent.emoji} ${agent.name}`;
+
+  const content = document.getElementById('inbox-panel-content');
+  let html = '';
+
+  if (agent.inboxFiles.length > 0) {
+    html += `<div class="inbox-section-label">📬 Inbox — ${agent.inboxFiles.length} unread</div>`;
+    html += agent.inboxFiles.map(f => `
+      <div class="inbox-file-card unread" id="ifc-${encodeId(f.name)}" onclick="toggleInboxFile('${escStr(f.name)}', '${escStr(f.path)}')">
+        <div class="inbox-file-header">
+          <div class="inbox-file-name">${f.name}</div>
+          <div class="inbox-file-hint">click to read →</div>
+        </div>
+        <div class="inbox-file-content" id="ifc-content-${encodeId(f.name)}"></div>
+      </div>`).join('');
+  } else {
+    html += `<div class="clear-inbox">✓ Inbox clear</div>`;
+  }
+
+  if (agent.processedFiles.length > 0) {
+    html += `<div class="inbox-section-label">✓ Processed (${agent.processedCount})</div>`;
+    html += `<div class="processed-list">` +
+      agent.processedFiles.map(f => `<div class="processed-item">${f}</div>`).join('') +
+      `</div>`;
+  }
+
+  content.innerHTML = html;
+  document.getElementById('inbox-panel').classList.add('open');
+  document.getElementById('main').classList.add('inbox-open');
+}
+
+function closeInboxPanel() {
+  selectedAgent = null;
+  document.getElementById('inbox-panel').classList.remove('open');
+  document.getElementById('main').classList.remove('inbox-open');
+  renderAgents();
+}
+
+function toggleInboxFile(name, filePath) {
+  const id      = encodeId(name);
+  const content = document.getElementById(`ifc-content-${id}`);
+  if (!content) return;
+
+  if (content.classList.contains('visible')) {
+    content.classList.remove('visible');
+    openFileCards.delete(name);
+    return;
+  }
+
+  openFileCards.add(name);
+  content.classList.add('visible');
+  if (content.textContent.trim() === '') {
+    content.textContent = 'Loading…';
+    fetchFile(filePath).then(text => {
+      content.textContent = text;
+    });
+  }
+}
+
+// ─── Threads ─────────────────────────────────────────────────────────────────
+function setThreadFilter(f) {
+  threadFilter = f;
+  document.getElementById('filter-active-threads').className = 'pill' + (f === 'active' ? ' active' : '');
+  document.getElementById('filter-all-threads').className    = 'pill' + (f === 'all'    ? ' active' : '');
+  renderThreads();
+}
+
+function sortBy(key) {
+  if (sortKey === key) {
+    sortDir = -sortDir;
+  } else {
+    sortKey = key;
+    sortDir = -1;
+  }
+  renderThreads();
+}
+
+function renderThreads() {
+  const tbody = document.getElementById('threads-tbody');
+
+  // Update sort arrows
+  ['date','status','updated'].forEach(k => {
+    const el = document.getElementById(`sort-${k}`);
+    if (el) el.textContent = sortKey === k ? (sortDir === -1 ? '↓' : '↑') : '';
+  });
+
+  let threads = state.threads.slice();
+
+  if (threadFilter === 'active') {
+    threads = threads.filter(t => t.status !== 'done' && t.status !== 'archived' && t.zone !== 'archive');
+  }
+
+  threads.sort((a, b) => {
+    let va, vb;
+    if (sortKey === 'date')    { va = a.date; vb = b.date; }
+    else if (sortKey === 'status') { va = a.status; vb = b.status; }
+    else                       { va = a.lastMtime; vb = b.lastMtime; }
+    if (va < vb) return sortDir;
+    if (va > vb) return -sortDir;
+    return 0;
+  });
+
+  if (threads.length === 0) {
+    tbody.innerHTML = `<tr class="no-threads-row"><td colspan="5">No threads yet.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = threads.map(t => {
+    const sel    = selectedThread === t.slug ? ' selected' : '';
+    const agents = t.agents.map(a => `<div class="agent-chip">${a}</div>`).join('');
+    const readable = t.slug.replace(/^\d{4}-\d{2}-\d{2}_/, '').replace(/-/g, ' ');
+
+    return `<tr class="thread-row${sel}" onclick="selectThread('${escStr(t.slug)}')">
+      <td class="thread-name">
+        ${readable}
+        <span class="thread-slug">${t.slug}</span>
+      </td>
+      <td class="col-date">${t.date}</td>
+      <td class="col-status"><span class="status-pill status-${t.status}">${t.status}</span></td>
+      <td class="col-agents"><div class="agent-chips">${agents || '<span style="color:var(--muted);font-size:11px">—</span>'}</div></td>
+      <td class="col-updated">${t.lastActive}</td>
+    </tr>`;
+  }).join('');
+}
+
+function selectThread(slug) {
+  selectedThread = slug;
+  renderThreads();
+  openShelf(slug);
+}
+
+function openShelf(slug) {
+  const thread = state.threads.find(t => t.slug === slug);
+  if (!thread) return;
+
+  const readable = slug.replace(/^\d{4}-\d{2}-\d{2}_/, '').replace(/-/g, ' ');
+  document.getElementById('shelf-title').textContent = readable;
+
+  // Info
+  document.getElementById('shelf-info-content').innerHTML = `
+    <div class="shelf-info-row"><div class="shelf-info-key">Status</div><span class="status-pill status-${thread.status}">${thread.status}</span></div>
+    <div class="shelf-info-row"><div class="shelf-info-key">Date</div>${thread.date}</div>
+    <div class="shelf-info-row"><div class="shelf-info-key">Updated</div>${thread.lastActive}</div>
+    <div class="shelf-info-row"><div class="shelf-info-key">Zone</div><span style="color:var(--muted)">${thread.zone}</span></div>
+  `;
+
+  // Files
+  const fileList = document.getElementById('shelf-file-list');
+  fileList.innerHTML = thread.files.map(f => {
+    const ext = f.name.split('.').pop().toLowerCase();
+    const icon = ext === 'md' ? '📄' : (ext.match(/png|jpg|gif|svg/) ? '🖼' : '📎');
+    return `<div class="shelf-file-item" id="sfi-${encodeId(f.name)}" onclick="viewShelfFile('${escStr(f.name)}', '${escStr(f.path)}')">
+      <span class="shelf-file-icon">${icon}</span>
+      <span>${f.name}</span>
+    </div>`;
+  }).join('');
+
+  // Agents
+  const agentsEl = document.getElementById('shelf-agents-content');
+  agentsEl.innerHTML = thread.agents.length > 0
+    ? thread.agents.map(a => `<div class="agent-chip">${a}</div>`).join('')
+    : '<span style="color:var(--muted);font-size:11px">None detected</span>';
+
+  closeFileViewer();
+  document.getElementById('thread-shelf').classList.add('open');
+}
+
+function toggleShelf() {
+  const shelf = document.getElementById('thread-shelf');
+  if (!shelf.classList.contains('open')) return;
+  shelf.classList.remove('open');
+  selectedThread = null;
+  renderThreads();
+}
+
+function viewShelfFile(name, filePath) {
+  // Toggle
+  const el = document.getElementById(`sfi-${encodeId(name)}`);
+  if (el && el.classList.contains('active')) {
+    closeFileViewer();
+    return;
+  }
+  // Deactivate others
+  document.querySelectorAll('.shelf-file-item.active').forEach(e => e.classList.remove('active'));
+  if (el) el.classList.add('active');
+
+  const viewer = document.getElementById('file-viewer');
+  viewer.classList.remove('hidden');
+  document.getElementById('file-viewer-name').textContent = name;
+  document.getElementById('file-viewer-body').textContent = 'Loading…';
+
+  fetchFile(filePath).then(text => {
+    document.getElementById('file-viewer-body').textContent = text;
+  });
+}
+
+function closeFileViewer() {
+  document.getElementById('file-viewer').classList.add('hidden');
+  document.querySelectorAll('.shelf-file-item.active').forEach(e => e.classList.remove('active'));
+}
+
+// ─── View Toggle ─────────────────────────────────────────────────────────────
+function setView(v) {
+  currentView = v;
+  document.getElementById('btn-list').className = 'view-btn' + (v === 'list' ? ' active' : '');
+  document.getElementById('btn-map').className  = 'view-btn' + (v === 'map'  ? ' active' : '');
+  document.getElementById('threads-view').style.display = v === 'list' ? 'flex' : 'none';
+  const mapEl = document.getElementById('map-view');
+  if (v === 'map') {
+    mapEl.classList.add('active');
+    drawMap();
+  } else {
+    mapEl.classList.remove('active');
+  }
+}
+
+// ─── Activity Map ─────────────────────────────────────────────────────────────
+let mapNodes   = [];
+let mapAnim    = null;
+
+function drawMap() {
+  const container = document.getElementById('map-view');
+  const canvas    = document.getElementById('map-canvas');
+  const W = container.clientWidth  || 800;
+  const H = container.clientHeight || 500;
+  canvas.width  = W;
+  canvas.height = H;
+
+  const ctx    = canvas.getContext('2d');
+  const agents = state.agents;
+  const threads = state.threads;
+
+  if (agents.length === 0) {
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#7c8db0';
+    ctx.font = '14px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText('No agents yet', W / 2, H / 2);
+    return;
+  }
+
+  // Build/update nodes
+  const existing = {};
+  mapNodes.forEach(n => { existing[n.name] = n; });
+
+  mapNodes = agents.map((a, i) => {
+    const angle = (2 * Math.PI * i / agents.length) - Math.PI / 2;
+    const r     = Math.min(W, H) * 0.32;
+    const cx    = W / 2;
+    const cy    = H / 2;
+    const tx    = cx + r * Math.cos(angle);
+    const ty    = cy + r * Math.sin(angle);
+    const prev  = existing[a.name];
+    return {
+      name:   a.name,
+      emoji:  a.emoji,
+      inbox:  a.inboxCount > 0,
+      active: a.isActive,
+      x:  prev ? prev.x  + (tx - prev.x)  * 0.15 : tx,
+      y:  prev ? prev.y  + (ty - prev.y)  * 0.15 : ty,
+      tx, ty,
+      vx: prev ? prev.vx || 0 : 0,
+      vy: prev ? prev.vy || 0 : 0,
+    };
+  });
+
+  if (mapAnim) cancelAnimationFrame(mapAnim);
+  let frame = 0;
+
+  function animate() {
+    if (currentView !== 'map') return;
+    ctx.clearRect(0, 0, W, H);
+    frame++;
+
+    // Draw edges
+    threads.forEach(t => {
+      if (t.agents.length < 2) return;
+      const color = t.status === 'in-progress' ? '#f59e0b'
+                  : (t.status === 'done' || t.status === 'archived' || t.zone === 'archive') ? '#4b5563'
+                  : '#6366f1';
+      for (let i = 0; i < t.agents.length; i++) {
+        for (let j = i + 1; j < t.agents.length; j++) {
+          const na = mapNodes.find(n => n.name === t.agents[i]);
+          const nb = mapNodes.find(n => n.name === t.agents[j]);
+          if (!na || !nb) continue;
+          ctx.beginPath();
+          ctx.moveTo(na.x, na.y);
+          ctx.lineTo(nb.x, nb.y);
+          ctx.strokeStyle = color;
+          ctx.lineWidth   = 1.5;
+          ctx.globalAlpha = 0.4;
+          ctx.stroke();
+          ctx.globalAlpha = 1;
+        }
+      }
+    });
+
+    // Draw nodes
+    mapNodes.forEach(n => {
+      // Gentle float
+      n.x += n.vx;
+      n.y += n.vy;
+      n.vx += (n.tx - n.x) * 0.04;
+      n.vy += (n.ty - n.y) * 0.04;
+      n.vx *= 0.8;
+      n.vy *= 0.8;
+      n.x += (Math.sin(frame * 0.01 + n.tx) * 0.3);
+      n.y += (Math.cos(frame * 0.013 + n.ty) * 0.3);
+
+      const radius = n.inbox ? 24 : (n.active ? 20 : 16);
+      const color  = n.inbox ? '#f59e0b' : (n.active ? '#22c55e' : '#6b7280');
+
+      // Pulse ring for inbox
+      if (n.inbox) {
+        const pulse = 0.4 + 0.4 * Math.sin(frame * 0.07);
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, radius + 8, 0, Math.PI * 2);
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth   = 2;
+        ctx.globalAlpha = pulse * 0.6;
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+
+      // Node circle
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, radius, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.globalAlpha = 0.85;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      // Emoji
+      ctx.font = `${radius * 0.9}px serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#fff';
+      ctx.fillText(n.emoji, n.x, n.y);
+
+      // Name label
+      ctx.font = '11px system-ui';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillText(n.name, n.x, n.y + radius + 4);
+    });
+
+    mapAnim = requestAnimationFrame(animate);
+  }
+
+  animate();
+}
+
+// ─── File Fetch ───────────────────────────────────────────────────────────────
+async function fetchFile(filePath) {
+  try {
+    const res = await fetch(`/file?path=${encodeURIComponent(filePath)}`);
+    if (!res.ok) return `Error ${res.status}: ${await res.text()}`;
+    return await res.text();
+  } catch (e) {
+    return `Error: ${e.message}`;
+  }
+}
+
+// ─── Utilities ────────────────────────────────────────────────────────────────
+function escStr(s) {
+  return s.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+function encodeId(s) {
+  return s.replace(/[^a-z0-9]/gi, '_');
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+connectSSE();
+</script>
+</body>
+</html>
