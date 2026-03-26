@@ -189,10 +189,11 @@ function scanAgentComms() {
       const rawStatus = parseStatus(tp);
       const status = zone === 'archive' && rawStatus === 'unknown' ? 'archived' : rawStatus;
 
-      const files = safeReadDir(tp).filter(f => !f.startsWith('.')).map(f => ({
-        name: f,
-        path: path.join(tp, f),
-      }));
+      const files = safeReadDir(tp).filter(f => !f.startsWith('.')).map(f => {
+        const fp = path.join(tp, f);
+        const s  = safeStat(fp);
+        return { name: f, path: fp, mtime: s ? s.mtimeMs : 0 };
+      });
 
       const lastMtime = latestMtime(tp);
 
