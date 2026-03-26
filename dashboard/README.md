@@ -8,19 +8,30 @@ Shows agent inbox status, thread activity, and system health in one view.
 ## Start
 
 ```bash
-node dashboard/server.js
+# Auto-open browser
+bash dashboard/start.sh
+
+# Without browser auto-open
+bash dashboard/start.sh --no-open
+
+# Custom port
+bash dashboard/start.sh --port 8080
 ```
 
-Opens at: [http://localhost:7842](http://localhost:7842)
+Opens at: [http://localhost:7843](http://localhost:7843) (default)
 
-**Custom port:**
+**Or, start the server directly:**
 ```bash
+node dashboard/server.js
+# or with custom port
 node dashboard/server.js 8080
+# or with env var
+AGENTCOMMS_PORT=8080 node dashboard/server.js
 ```
 
 **Console output on start:**
 ```
-AgentComms Dashboard: http://localhost:7842
+AgentComms Dashboard: http://localhost:7843
 Watching: /path/to/AgentComms
 ```
 
@@ -61,7 +72,7 @@ const AGENT_EMOJIS = {
 };
 
 // 3. Default port
-const DEFAULT_PORT = 7842;
+const DEFAULT_PORT = 7843;
 ```
 
 **To point the dashboard at a different AgentComms folder:**
@@ -86,8 +97,15 @@ AGENTCOMMS_PATH="/path/to/your/AgentComms" node dashboard/server.js
 | `GET /data` | Returns full JSON snapshot of agents, threads, and stats |
 | `GET /events` | Server-Sent Events stream for live updates |
 | `GET /file?path=<path>` | Serves a file (`.md`, images) — path-constrained to AgentComms folder |
+| `POST /shutdown` | Cleanly shuts down the dashboard server (triggered by the Stop button) |
 
 File requests outside the AgentComms folder return HTTP 403.
+
+---
+
+## Known Gaps (v0.7)
+
+**Multi-instance watcher limitation:** When switching instances using the dashboard dropdown, the file watcher continues monitoring only the default instance. SSE updates (live refresh) won't fire for non-default instances until the server is restarted. Switching instances works for data loading, but real-time updates are limited. This is a known limitation and will be fixed in v0.7.
 
 ---
 
