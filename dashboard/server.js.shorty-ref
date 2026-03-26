@@ -1,0 +1,635 @@
+#!/usr/bin/env node
+// AgentComms Dashboard — local server with live file watching via SSE
+// No npm dependencies. Pure Node.js.
+// Usage: node server.js [port]
+
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+
+const PORT = parseInt(process.argv[2] || '7842');
+
+// ── Instance registry ──────────────────────────────────────────────────────
+const INSTANCES_FILE = path.join(__dirname, 'instances.json');
+const SUPPORTED_VERSION = 1;
+
+function loadInstances() {
+  try {
+    return JSON.parse(fs.readFileSync(INSTANCES_FILE, 'utf8'));
+  } catch {
+    return [
+      { key: 'tpp', label: 'tPP', path: path.join(process.env.HOME, 'Library/CloudStorage/GoogleDrive-jonestrebski@gmail.com/My Drive/tPP/AgentComms'), builtin: true },
+      { key: 'it',  label: 'IT-Comms', path: path.join(process.env.HOME, 'Library/CloudStorage/GoogleDrive-jonestrebski@gmail.com/My Drive/IT-Comms'), builtin: true },
+    ];
+  }
+}
+
+function saveInstances(list) {
+  fs.writeFileSync(INSTANCES_FILE, JSON.stringify(list, null, 2));
+}
+
+function validateInstance(instancePath) {
+  // Check folder exists
+  if (!fs.existsSync(instancePath)) return { ok: false, error: 'Folder not found' };
+  // Check required subdirs
+  for (const sub of ['agents', 'threads', 'archive']) {
+    if (!fs.existsSync(path.join(instancePath, sub))) {
+      return { ok: false, error: `Missing required folder: ${sub}/` };
+    }
+  }
+  // Check README.md for version tag
+  const readme = path.join(instancePath, 'README.md');
+  if (!fs.existsSync(readme)) return { ok: false, error: 'Missing README.md (not a valid AgentComms folder)' };
+  const content = fs.readFileSync(readme, 'utf8');
+  const versionMatch = content.match(/agentcomms-version:\s*(\d+)/);
+  if (!versionMatch) return { ok: false, error: 'README.md missing agentcomms-version tag' };
+  const version = parseInt(versionMatch[1]);
+  if (version !== SUPPORTED_VERSION) return { ok: false, error: `Unsupported version: ${version} (dashboard supports v${SUPPORTED_VERSION})` };
+  // Count agents
+  const agentsDir = path.join(instancePath, 'agents');
+  const agentCount = fs.readdirSync(agentsDir).filter(f => fs.statSync(path.join(agentsDir, f)).isDirectory()).length;
+  return { ok: true, version, agentCount };
+}
+
+// Build COMMS_INSTANCES map from file
+function buildInstanceMap() {
+  const list = loadInstances();
+  const map = {};
+  for (const inst of list) {
+    map[inst.key] = { label: inst.label, path: inst.path };
+  }
+  return map;
+}
+
+let COMMS_INSTANCES = buildInstanceMap();
+
+// Default instance (used by scanAgentComms and watcher)
+const AGENTCOMMS = COMMS_INSTANCES.tpp ? COMMS_INSTANCES.tpp.path : Object.values(COMMS_INSTANCES)[0].path;
+
+// ── Data scanning ──────────────────────────────────────────────────────────
+
+function scanAgentComms(rootPath) {
+  const scanRoot = rootPath || COMMS_INSTANCES.tpp.path;
+  const result = {
+    agents: [],
+    threads: [],
+    archive: [],
+    stats: { totalAgents: 0, activeThreads: 0, archivedThreads: 0, totalMessages: 0 }
+  };
+
+  if (!fs.existsSync(scanRoot)) return result;
+
+  // Use scanRoot as the local reference throughout this function
+  const AGENTCOMMS = scanRoot;
+
+  // Scan agents
+  const agentsDir = path.join(AGENTCOMMS, 'agents');
+  if (fs.existsSync(agentsDir)) {
+    const agentFolders = fs.readdirSync(agentsDir).filter(f =>
+      fs.statSync(path.join(agentsDir, f)).isDirectory()
+    );
+
+    for (const folder of agentFolders) {
+      const agentPath = path.join(agentsDir, folder);
+      const inboxPath = path.join(agentPath, 'inbox');
+      const outboxPath = path.join(agentPath, 'outbox');
+
+      const inboxFiles = fs.existsSync(inboxPath)
+        ? fs.readdirSync(inboxPath).filter(f =>
+            f.endsWith('.md') && fs.statSync(path.join(inboxPath, f)).isFile()
+          )
+        : [];
+
+      // Collect processed files from both possible locations and deduplicate by filename
+      const processedPathA = path.join(agentPath, 'inbox', 'processed');
+      const processedPathB = path.join(agentPath, 'processed');
+      const processedSeen = new Set();
+      const processedFiles = [];
+      for (const pp of [processedPathA, processedPathB]) {
+        if (fs.existsSync(pp)) {
+          for (const f of fs.readdirSync(pp).filter(f => f.endsWith('.md'))) {
+            if (!processedSeen.has(f)) {
+              processedSeen.add(f);
+              processedFiles.push(f);
+            }
+          }
+        }
+      }
+
+      const outboxFiles = fs.existsSync(outboxPath)
+        ? fs.readdirSync(outboxPath).filter(f => f.endsWith('.md'))
+        : [];
+
+      // Get most recent activity — check both processed locations
+      let lastActivity = null;
+      const allFiles = [
+        ...inboxFiles.map(f => path.join(inboxPath, f)),
+        ...(fs.existsSync(processedPathA) ? fs.readdirSync(processedPathA).filter(f => f.endsWith('.md')).map(f => path.join(processedPathA, f)) : []),
+        ...(fs.existsSync(processedPathB) ? fs.readdirSync(processedPathB).filter(f => f.endsWith('.md')).map(f => path.join(processedPathB, f)) : []),
+        ...outboxFiles.map(f => path.join(outboxPath, f)),
+      ];
+      for (const f of allFiles) {
+        try {
+          const mtime = fs.statSync(f).mtime;
+          if (!lastActivity || mtime > lastActivity) lastActivity = mtime;
+        } catch {}
+      }
+
+      result.agents.push({
+        folder,
+        name: folder.replace(/^[\p{Emoji_Presentation}\p{Emoji}\uFE0F\u200D]+\s*/u, ''),
+        emoji: extractEmoji(folder),
+        inboxCount: inboxFiles.length,
+        processedCount: processedFiles.length,
+        outboxCount: outboxFiles.length,
+        lastActivity: lastActivity ? lastActivity.toISOString() : null,
+        inboxFiles,
+        processedFiles,
+      });
+    }
+  }
+
+  // Scan threads
+  const threadsDir = path.join(AGENTCOMMS, 'threads');
+  if (fs.existsSync(threadsDir)) {
+    const threadFolders = fs.readdirSync(threadsDir).filter(f =>
+      fs.statSync(path.join(threadsDir, f)).isDirectory()
+    );
+
+    for (const folder of threadFolders) {
+      const threadPath = path.join(threadsDir, folder);
+
+      // Detect "collection" threads: directories whose children are date-stamped subfolders
+      // (e.g. weekly-status/2026-03-14/) rather than .md files at the top level.
+      const topFiles = fs.readdirSync(threadPath);
+      const hasDateSubfolders = topFiles.some(f => {
+        return /^\d{4}-\d{2}-\d{2}$/.test(f) &&
+          fs.statSync(path.join(threadPath, f)).isDirectory();
+      });
+
+      if (hasDateSubfolders) {
+        // Treat each date subfolder as its own virtual thread
+        for (const dateSub of topFiles.filter(f =>
+          /^\d{4}-\d{2}-\d{2}$/.test(f) &&
+          fs.statSync(path.join(threadPath, f)).isDirectory()
+        )) {
+          const subPath = path.join(threadPath, dateSub);
+          const virtualSlug = `${folder}/${dateSub}`;
+          const thread = parseThread(subPath, virtualSlug, 'active');
+          // Override title to be human-readable: "weekly status — 2026-03-14"
+          thread.title = `${folder.replace(/-/g, ' ')} — ${dateSub}`;
+          result.threads.push(thread);
+        }
+      } else {
+        const thread = parseThread(threadPath, folder, 'active');
+        result.threads.push(thread);
+      }
+    }
+  }
+
+  // Scan archive
+  const archiveDir = path.join(AGENTCOMMS, 'archive');
+  if (fs.existsSync(archiveDir)) {
+    const archiveFolders = fs.readdirSync(archiveDir).filter(f =>
+      fs.statSync(path.join(archiveDir, f)).isDirectory()
+    );
+
+    for (const folder of archiveFolders) {
+      const threadPath = path.join(archiveDir, folder);
+      const thread = parseThread(threadPath, folder, 'archived');
+      result.archive.push(thread);
+    }
+  }
+
+  // Stats
+  result.stats.totalAgents = result.agents.length;
+  result.stats.activeThreads = result.threads.length;
+  result.stats.archivedThreads = result.archive.length;
+  result.stats.totalMessages = result.agents.reduce(
+    (sum, a) => sum + a.inboxCount + a.processedCount, 0
+  );
+
+  return result;
+}
+
+function parseThread(threadPath, folder, state) {
+  const files = fs.readdirSync(threadPath);
+  let status = state;
+  let summary = '';
+  let lastActivity = null;
+
+  // Read status.md if present
+  const statusFile = path.join(threadPath, 'status.md');
+  if (fs.existsSync(statusFile)) {
+    const content = fs.readFileSync(statusFile, 'utf8').toLowerCase();
+    if (content.includes('done') || content.includes('complete') || content.includes('closed')) {
+      status = 'done';
+    } else if (content.includes('in-progress') || content.includes('in progress')) {
+      status = 'in-progress';
+    }
+    summary = fs.readFileSync(statusFile, 'utf8').split('\n').slice(0, 3).join(' ').substring(0, 120);
+  }
+
+  // Read brief.md first line as title fallback
+  const briefFile = path.join(threadPath, 'brief.md');
+  if (!summary && fs.existsSync(briefFile)) {
+    summary = fs.readFileSync(briefFile, 'utf8').split('\n').find(l => l.trim()) || '';
+    summary = summary.replace(/^#+\s*/, '').substring(0, 120);
+  }
+
+  // Get last modified time
+  for (const f of files) {
+    try {
+      const mtime = fs.statSync(path.join(threadPath, f)).mtime;
+      if (!lastActivity || mtime > lastActivity) lastActivity = mtime;
+    } catch {}
+  }
+
+  // Extract agents involved from folder name and file names
+  const involvedAgents = extractAgentsFromThread(folder, files);
+
+  return {
+    folder,
+    slug: folder,
+    threadPath,
+    date: folder.substring(0, 10),
+    title: folder.replace(/^\d{4}-\d{2}-\d{2}_/, '').replace(/-/g, ' '),
+    status,
+    summary,
+    files: files.filter(f => f.endsWith('.md') || f.endsWith('.png') || f.endsWith('.jpg') || f.endsWith('.jpeg') || f.endsWith('.gif') || f.endsWith('.webp')),
+    fileCount: files.length,
+    lastActivity: lastActivity ? lastActivity.toISOString() : null,
+    involvedAgents,
+  };
+}
+
+function extractAgentsFromThread(folder, files) {
+  const knownAgents = ['shorty', 'righty', 'scouty', 'smarty', 'copy', 'stratty', 'hairy', 'codey', 'pixxy'];
+  const found = new Set();
+  const text = (folder + ' ' + files.join(' ')).toLowerCase();
+  for (const agent of knownAgents) {
+    if (text.includes(agent)) found.add(agent);
+  }
+  return Array.from(found);
+}
+
+const AGENT_EMOJIS = {
+  shorty:  '🥃',
+  righty:  '📋',
+  scouty:  '🔍',
+  smarty:  '🧠',
+  copy:    '✍️',
+  stratty: '🎯',
+  hairy:   '🤝',
+  codey:   '👨‍💻',
+  pixxy:   '🎨',
+  archy:   '🏗️',
+  stacky:  '👨🏽‍💻',
+  kanby:   '👨🏾‍💻',
+  marky:   '📢',
+  desy:    '👩🏽‍💻',
+};
+
+function extractEmoji(str) {
+  // First try the known-agent lookup
+  const key = str.toLowerCase().trim();
+  if (AGENT_EMOJIS[key]) return AGENT_EMOJIS[key];
+  // Fallback: extract leading emoji from folder name
+  const match = str.match(/^([\p{Emoji_Presentation}\p{Emoji}\u200D\uFE0F]+)/u);
+  return match ? match[1] : '🤖';
+}
+
+// ── SSE clients ────────────────────────────────────────────────────────────
+
+const sseClients = new Set();
+
+function broadcast(data) {
+  // If data has a specific instance, only send to matching clients
+  // Otherwise send to all (e.g. dispatcher toggle events)
+  for (const res of sseClients) {
+    try {
+      let payload = data;
+      if (data.type === 'update' && res.instancePath) {
+        // Re-scan for this client's instance
+        const instanceData = scanAgentComms(res.instancePath);
+        instanceData.instance = res.instanceKey;
+        payload = { type: 'update', data: instanceData };
+      }
+      res.write(`data: ${JSON.stringify(payload)}\n\n`);
+    } catch {}
+  }
+}
+
+// Watch AgentComms for changes
+let watchDebounce = null;
+function setupWatcher() {
+  if (!fs.existsSync(AGENTCOMMS)) return;
+  try {
+    fs.watch(AGENTCOMMS, { recursive: true }, () => {
+      clearTimeout(watchDebounce);
+      watchDebounce = setTimeout(() => {
+        broadcast({ type: 'update', data: scanAgentComms() });
+      }, 500);
+    });
+    console.log(`Watching: ${AGENTCOMMS}`);
+  } catch (e) {
+    console.warn('Watch failed:', e.message);
+  }
+}
+
+// ── Dispatcher control ────────────────────────────────────────────────────
+
+const { execSync } = require('child_process');
+const DISPATCHER_JOB_ID = '098c1398-aedd-49e9-aff7-aa8cef72120c';
+const OPENCLAW_BIN = '/usr/local/bin/node /usr/local/bin/openclaw';
+
+function getDispatcherStatus() {
+  try {
+    const out = execSync(`${OPENCLAW_BIN} cron list --json`, { encoding: 'utf8', timeout: 5000 }).trim();
+    const parsed = JSON.parse(out);
+    const jobs = parsed.jobs || (Array.isArray(parsed) ? parsed : []);
+    const job = jobs.find(j => j.id === DISPATCHER_JOB_ID || j.name === 'agentcomms-dispatcher');
+    return {
+      enabled: job ? job.enabled !== false : null,
+      jobId: job ? job.id : DISPATCHER_JOB_ID,
+      status: job ? (job.status || 'ok') : 'unknown',
+    };
+  } catch (e) {
+    return { enabled: null, jobId: DISPATCHER_JOB_ID, status: 'error', error: e.message };
+  }
+}
+
+function setDispatcherEnabled(enable) {
+  const cmd = enable ? 'enable' : 'disable';
+  try {
+    execSync(`${OPENCLAW_BIN} cron ${cmd} ${DISPATCHER_JOB_ID}`, { encoding: 'utf8', timeout: 8000 });
+    return { ok: true, enabled: enable };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+}
+
+function wakeAgent(agentId) {
+  try {
+    // Read agent-dispatch.json to get inbox path
+    const dispatchPath = path.join(__dirname, '../../config/agent-dispatch.json');
+    let inboxPath = `AgentComms/agents/${agentId}/inbox`;
+    if (fs.existsSync(dispatchPath)) {
+      const dispatch = JSON.parse(fs.readFileSync(dispatchPath, 'utf8'));
+      const entry = (dispatch.agents || []).find(a => a.id === agentId);
+      if (entry && entry.inboxPath) inboxPath = entry.inboxPath;
+    }
+    const message = `Check your AgentComms inbox at ~/Library/CloudStorage/GoogleDrive-jonestrebski@gmail.com/My Drive/${inboxPath}/ for any new routing signals. If inbox is empty, reply NO_REPLY and stop. If there ARE new files: 1) Read the routing signal to find the thread folder. 2) Read the brief.md in that thread folder for the full task. 3) Complete the task as instructed. 4) Update the thread's status.md to done. 5) Move the inbox signal file to your processed/ folder.`;
+    // Spawn via openclaw CLI - note: openclaw sessions spawn not available in CLI, so use gateway REST API
+    const gwPayload = JSON.stringify({
+      agentId,
+      task: message,
+      mode: 'run',
+      runtime: 'subagent',
+    });
+    execSync(`curl -s -X POST http://localhost:18789/api/sessions/spawn -H 'Content-Type: application/json' -d '${gwPayload.replace(/'/g, "'\\''")}'`, { timeout: 8000 });
+    return { ok: true, message: `Wake signal sent to ${agentId}` };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+}
+
+// ── HTTP server ────────────────────────────────────────────────────────────
+
+const server = http.createServer((req, res) => {
+  const url = new URL(req.url, `http://localhost:${PORT}`);
+
+  // CORS for local dev
+  res.setHeader('Access-Control-Allow-Origin', '*');
+
+  if (url.pathname === '/events') {
+    // SSE endpoint — honours ?instance= param
+    const instanceKey = url.searchParams.get('instance') || 'tpp';
+    const instance = COMMS_INSTANCES[instanceKey] || COMMS_INSTANCES.tpp;
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+    });
+    const initData = scanAgentComms(instance.path);
+    initData.instance = instanceKey;
+    res.write(`data: ${JSON.stringify({ type: 'init', data: initData })}\n\n`);
+    // Tag client with its instance so broadcast only sends relevant updates
+    res.instanceKey = instanceKey;
+    res.instancePath = instance.path;
+    sseClients.add(res);
+    req.on('close', () => sseClients.delete(res));
+    return;
+  }
+
+  if (url.pathname === '/data') {
+    // JSON API — optional ?instance=tpp|it param
+    const instanceKey = url.searchParams.get('instance') || 'tpp';
+    const instance = COMMS_INSTANCES[instanceKey] || COMMS_INSTANCES.tpp;
+    const data = scanAgentComms(instance.path);
+    data.instance = instanceKey;
+    data.instanceLabel = instance.label;
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(data));
+    return;
+  }
+
+  if (url.pathname === '/instances') {
+    const list = loadInstances().map(inst => ({
+      key: inst.key,
+      label: inst.label,
+      path: inst.path,
+      builtin: !!inst.builtin,
+      exists: fs.existsSync(inst.path),
+    }));
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(list));
+    return;
+  }
+
+  if (url.pathname === '/browse') {
+    // Folder browser — returns subdirectories of a given path
+    const reqPath = url.searchParams.get('path') || process.env.HOME;
+    const expanded = reqPath.replace(/^~/, process.env.HOME);
+    try {
+      if (!fs.existsSync(expanded)) {
+        res.writeHead(404); res.end(JSON.stringify({ error: 'Path not found' })); return;
+      }
+      const entries = fs.readdirSync(expanded)
+        .filter(f => {
+          try { return fs.statSync(path.join(expanded, f)).isDirectory() && !f.startsWith('.'); }
+          catch { return false; }
+        })
+        .sort()
+        .map(f => ({ name: f, path: path.join(expanded, f) }));
+      // Check if this dir looks like AgentComms
+      const looksLikeAC = ['agents','threads','archive'].every(sub => fs.existsSync(path.join(expanded, sub)));
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ current: expanded, entries, looksLikeAC, parent: path.dirname(expanded) }));
+    } catch(e) {
+      res.writeHead(500); res.end(JSON.stringify({ error: e.message }));
+    }
+    return;
+  }
+
+  if (url.pathname === '/instances/validate' && req.method === 'POST') {
+    let body = '';
+    req.on('data', c => { body += c; });
+    req.on('end', () => {
+      try {
+        const { instancePath } = JSON.parse(body);
+        const expanded = instancePath.replace(/^~/, process.env.HOME);
+        const result = validateInstance(expanded);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ...result, resolvedPath: expanded }));
+      } catch(e) {
+        res.writeHead(400); res.end(JSON.stringify({ ok: false, error: e.message }));
+      }
+    });
+    return;
+  }
+
+  if (url.pathname === '/instances/add' && req.method === 'POST') {
+    let body = '';
+    req.on('data', c => { body += c; });
+    req.on('end', () => {
+      try {
+        const { key, label, instancePath } = JSON.parse(body);
+        const expanded = instancePath.replace(/^~/, process.env.HOME);
+        // Validate first
+        const check = validateInstance(expanded);
+        if (!check.ok) {
+          res.writeHead(400); res.end(JSON.stringify({ ok: false, error: check.error })); return;
+        }
+        // Check key not already used
+        const list = loadInstances();
+        if (list.find(i => i.key === key)) {
+          res.writeHead(400); res.end(JSON.stringify({ ok: false, error: `Key "${key}" already exists` })); return;
+        }
+        list.push({ key, label, path: expanded });
+        saveInstances(list);
+        COMMS_INSTANCES = buildInstanceMap();
+        res.writeHead(200); res.end(JSON.stringify({ ok: true, agentCount: check.agentCount, version: check.version }));
+        broadcast({ type: 'instances-changed' });
+      } catch(e) {
+        res.writeHead(400); res.end(JSON.stringify({ ok: false, error: e.message }));
+      }
+    });
+    return;
+  }
+
+  if (url.pathname === '/instances/remove' && req.method === 'POST') {
+    let body = '';
+    req.on('data', c => { body += c; });
+    req.on('end', () => {
+      try {
+        const { key } = JSON.parse(body);
+        const list = loadInstances();
+        const inst = list.find(i => i.key === key);
+        if (!inst) { res.writeHead(404); res.end(JSON.stringify({ ok: false, error: 'Not found' })); return; }
+        if (inst.builtin) { res.writeHead(403); res.end(JSON.stringify({ ok: false, error: 'Cannot remove built-in instances' })); return; }
+        const updated = list.filter(i => i.key !== key);
+        saveInstances(updated);
+        COMMS_INSTANCES = buildInstanceMap();
+        res.writeHead(200); res.end(JSON.stringify({ ok: true }));
+        broadcast({ type: 'instances-changed' });
+      } catch(e) {
+        res.writeHead(400); res.end(JSON.stringify({ ok: false, error: e.message }));
+      }
+    });
+    return;
+  }
+
+  if (url.pathname === '/dispatcher/status') {
+    const status = getDispatcherStatus();
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(status));
+    return;
+  }
+
+  if (url.pathname === '/dispatcher/toggle' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      try {
+        const { enable } = JSON.parse(body);
+        const result = setDispatcherEnabled(enable);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(result));
+        // Broadcast update so live clients reflect new state
+        broadcast({ type: 'dispatcher', enabled: enable });
+      } catch (e) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: e.message }));
+      }
+    });
+    return;
+  }
+
+  if (url.pathname === '/dispatcher/wake' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      try {
+        const { agentId } = JSON.parse(body);
+        if (!agentId) { res.writeHead(400); res.end(JSON.stringify({ ok: false, error: 'agentId required' })); return; }
+        const result = wakeAgent(agentId);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(result));
+      } catch (e) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: e.message }));
+      }
+    });
+    return;
+  }
+
+  if (url.pathname === '/file') {
+    // Serve a file's contents — constrained to AgentComms folder only
+    const rel = url.searchParams.get('path');
+    if (!rel) { res.writeHead(400); res.end('missing path'); return; }
+
+    // Security: only serve files inside AgentComms or its archive
+    const ARCHIVE = path.join(process.env.HOME,
+      "Library/CloudStorage/GoogleDrive-jonestrebski@gmail.com/My Drive/🥃 Shorty/AgentComms Archive");
+    const absPath = path.resolve(rel);
+    const allowed = absPath.startsWith(AGENTCOMMS) || absPath.startsWith(ARCHIVE);
+    if (!allowed) { res.writeHead(403); res.end('forbidden'); return; }
+
+    if (!fs.existsSync(absPath)) { res.writeHead(404); res.end('not found'); return; }
+
+    const ext = path.extname(absPath).toLowerCase();
+    if (ext === '.md' || ext === '.txt') {
+      res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
+      res.end(fs.readFileSync(absPath, 'utf8'));
+    } else if (['.png','.jpg','.jpeg','.gif','.webp'].includes(ext)) {
+      const mime = ext === '.png' ? 'image/png' : ext === '.gif' ? 'image/gif' : ext === '.webp' ? 'image/webp' : 'image/jpeg';
+      res.writeHead(200, { 'Content-Type': mime });
+      res.end(fs.readFileSync(absPath));
+    } else {
+      res.writeHead(415); res.end('unsupported type');
+    }
+    return;
+  }
+
+  if (url.pathname === '/' || url.pathname === '/index.html') {
+    // Serve the dashboard HTML
+    const htmlPath = path.join(__dirname, 'index.html');
+    if (fs.existsSync(htmlPath)) {
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.end(fs.readFileSync(htmlPath));
+    } else {
+      res.writeHead(404);
+      res.end('index.html not found');
+    }
+    return;
+  }
+
+  res.writeHead(404);
+  res.end('Not found');
+});
+
+server.listen(PORT, '127.0.0.1', () => {
+  console.log(`AgentComms Dashboard: http://localhost:${PORT}`);
+  setupWatcher();
+});
