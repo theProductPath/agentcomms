@@ -354,9 +354,48 @@
     display: flex; align-items: center; gap: 6px; flex-shrink: 0;
   }
   .file-viewer-name { font-size: 11px; font-weight: 600; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .file-viewer-expand {
+    background: none; border: none; cursor: pointer;
+    color: var(--muted); font-size: 14px; line-height: 1; padding: 2px 4px;
+    border-radius: 3px; transition: color .15s, background .15s;
+  }
+  .file-viewer-expand:hover { color: var(--text); background: var(--bg3); }
   .file-viewer-body {
     flex: 1; overflow-y: auto; padding: 10px;
     font-size: 11px; line-height: 1.7;
+    font-family: 'Menlo', 'Monaco', monospace;
+    white-space: pre-wrap; word-break: break-word;
+    color: var(--text);
+  }
+
+  /* ─── File Modal (full-screen expand) ───────────────────────────────── */
+  #file-modal {
+    display: none;
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(0,0,0,.65);
+    align-items: center; justify-content: center;
+  }
+  #file-modal.open { display: flex; }
+  #file-modal-inner {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 8px; width: 780px; max-width: 94vw;
+    height: 80vh; display: flex; flex-direction: column;
+    overflow: hidden; box-shadow: 0 24px 64px rgba(0,0,0,.6);
+  }
+  #file-modal-header {
+    padding: 10px 14px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+  }
+  #file-modal-name { font-weight: 600; font-size: 13px; flex: 1; }
+  #file-modal-close {
+    background: none; border: none; cursor: pointer;
+    color: var(--muted); font-size: 20px; line-height: 1;
+    padding: 2px 4px; border-radius: 3px; transition: color .15s;
+  }
+  #file-modal-close:hover { color: var(--text); }
+  #file-modal-body {
+    flex: 1; overflow-y: auto; padding: 16px 20px;
+    font-size: 12px; line-height: 1.8;
     font-family: 'Menlo', 'Monaco', monospace;
     white-space: pre-wrap; word-break: break-word;
     color: var(--text);
@@ -490,7 +529,7 @@
             <div class="shelf-col shelf-col-viewer" id="file-viewer">
               <div class="file-viewer-header">
                 <div class="file-viewer-name" id="file-viewer-name"></div>
-                <button onclick="closeFileViewer()" style="color:var(--muted);font-size:16px;line-height:1;">×</button>
+                <button class="file-viewer-expand" id="file-expand-btn" onclick="expandFileModal()" title="Expand to full view" style="visibility:hidden">⤢</button>
               </div>
               <div class="file-viewer-body" id="file-viewer-body">← Select a file to preview</div>
             </div>
@@ -511,6 +550,17 @@
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- File expand modal -->
+<div id="file-modal">
+  <div id="file-modal-inner">
+    <div id="file-modal-header">
+      <div id="file-modal-name"></div>
+      <button id="file-modal-close" onclick="closeFileModal()" title="Close">×</button>
+    </div>
+    <div id="file-modal-body"></div>
   </div>
 </div>
 
@@ -834,6 +884,7 @@ function viewShelfFile(name, filePath) {
 
   document.getElementById('file-viewer-name').textContent = name;
   document.getElementById('file-viewer-body').textContent = 'Loading…';
+  document.getElementById('file-expand-btn').style.visibility = 'visible';
 
   fetchFile(filePath).then(text => {
     document.getElementById('file-viewer-body').textContent = text;
@@ -843,8 +894,32 @@ function viewShelfFile(name, filePath) {
 function closeFileViewer() {
   document.getElementById('file-viewer-name').textContent = '';
   document.getElementById('file-viewer-body').textContent = '← Select a file to preview';
+  document.getElementById('file-expand-btn').style.visibility = 'hidden';
   document.querySelectorAll('.shelf-file-item.active').forEach(e => e.classList.remove('active'));
 }
+
+function expandFileModal() {
+  const name = document.getElementById('file-viewer-name').textContent;
+  const body = document.getElementById('file-viewer-body').textContent;
+  if (!name) return;
+  document.getElementById('file-modal-name').textContent = name;
+  document.getElementById('file-modal-body').textContent = body;
+  document.getElementById('file-modal').classList.add('open');
+}
+
+function closeFileModal() {
+  document.getElementById('file-modal').classList.remove('open');
+}
+
+// Close modal on backdrop click
+document.addEventListener('click', (e) => {
+  if (e.target === document.getElementById('file-modal')) closeFileModal();
+});
+
+// Close modal on Escape
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeFileModal();
+});
 
 // ─── View Toggle ─────────────────────────────────────────────────────────────
 function setView(v) {
