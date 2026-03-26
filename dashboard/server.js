@@ -40,7 +40,9 @@ const AGENT_EMOJIS = {
   'example-agent': '🤖',
 };
 
-const DEFAULT_PORT = 7842;
+// Port can be specified via AGENTCOMMS_PORT env var, CLI arg, or defaults to 7843
+// (using 7843 to avoid conflict with development instance at 7842)
+const DEFAULT_PORT = 7843;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -380,6 +382,20 @@ function handleRequest(req, res) {
     return;
   }
 
+  // ── Shutdown endpoint ──
+  if (pathname === '/shutdown') {
+    if (req.method !== 'POST') {
+      res.writeHead(405);
+      res.end('Method not allowed');
+      return;
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({ status: 'shutting down' }));
+    console.log('AgentComms Dashboard stopped.');
+    setTimeout(() => process.exit(0), 100);
+    return;
+  }
+
   // ── Serve index.html ──
   if (pathname === '/' || pathname === '/index.html') {
     const indexPath = path.join(__dirname, 'index.html');
@@ -401,7 +417,7 @@ function handleRequest(req, res) {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-const port = parseInt(process.argv[2], 10) || DEFAULT_PORT;
+const port = parseInt(process.env.AGENTCOMMS_PORT || process.argv[2], 10) || DEFAULT_PORT;
 
 // Validate AGENTCOMMS path
 const acStat = safeStat(AGENTCOMMS);

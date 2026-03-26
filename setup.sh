@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# AgentComms v0.5 — setup.sh
+# AgentComms v0.6 — setup.sh
 # Bootstraps a local AgentComms instance.
 # Usage: bash setup.sh [--path /path/to/destination] [--team "my team"]
 
@@ -137,27 +137,33 @@ make_dir "$TARGET/agents"
 make_dir "$TARGET/agents/example-agent"
 make_dir "$TARGET/agents/example-agent/inbox"
 make_dir "$TARGET/agents/example-agent/inbox/processed"
-make_dir "$TARGET/agents/example-agent/outbox"
 make_dir "$TARGET/threads"
 make_dir "$TARGET/threads/2026-01-01_example-thread"
+make_dir "$TARGET/threads/2026-01-02_in-progress-example"
 make_dir "$TARGET/archive"
 make_dir "$TARGET/archive/2026-01-01_example-completed"
+make_dir "$TARGET/archive/2026-01-01_archived-example"
 make_dir "$TARGET/dashboard"
+make_dir "$TARGET/scripts"
 echo ""
 
 # ─── Step 2: Write example files ─────────────────────────────────────────────
 echo "→ Writing example files..."
 write_file \
-  "$SCAFFOLD_DIR/agents/example-agent/inbox/2026-01-01_example-signal.md" \
-  "$TARGET/agents/example-agent/inbox/2026-01-01_example-signal.md"
+  "$SCAFFOLD_DIR/agents/example-agent/inbox/2026-01-01_example-signal-1.md" \
+  "$TARGET/agents/example-agent/inbox/2026-01-01_example-signal-1.md"
+
+write_file \
+  "$SCAFFOLD_DIR/agents/example-agent/inbox/2026-01-02_in-progress-signal.md" \
+  "$TARGET/agents/example-agent/inbox/2026-01-02_in-progress-signal.md"
 
 write_file \
   "$SCAFFOLD_DIR/agents/example-agent/inbox/processed/.keep" \
   "$TARGET/agents/example-agent/inbox/processed/.keep"
 
 write_file \
-  "$SCAFFOLD_DIR/agents/example-agent/outbox/.keep" \
-  "$TARGET/agents/example-agent/outbox/.keep"
+  "$SCAFFOLD_DIR/agents/example-agent/inbox/processed/2026-01-01_completed-signal.md" \
+  "$TARGET/agents/example-agent/inbox/processed/2026-01-01_completed-signal.md"
 
 write_file \
   "$SCAFFOLD_DIR/threads/2026-01-01_example-thread/brief.md" \
@@ -176,6 +182,22 @@ write_file \
   "$TARGET/threads/2026-01-01_example-thread/result.md"
 
 write_file \
+  "$SCAFFOLD_DIR/threads/2026-01-02_in-progress-example/brief.md" \
+  "$TARGET/threads/2026-01-02_in-progress-example/brief.md"
+
+write_file \
+  "$SCAFFOLD_DIR/threads/2026-01-02_in-progress-example/context.md" \
+  "$TARGET/threads/2026-01-02_in-progress-example/context.md"
+
+write_file \
+  "$SCAFFOLD_DIR/threads/2026-01-02_in-progress-example/status.md" \
+  "$TARGET/threads/2026-01-02_in-progress-example/status.md"
+
+write_file \
+  "$SCAFFOLD_DIR/threads/2026-01-02_in-progress-example/result.md" \
+  "$TARGET/threads/2026-01-02_in-progress-example/result.md"
+
+write_file \
   "$SCAFFOLD_DIR/archive/2026-01-01_example-completed/brief.md" \
   "$TARGET/archive/2026-01-01_example-completed/brief.md"
 
@@ -186,6 +208,18 @@ write_file \
 write_file \
   "$SCAFFOLD_DIR/archive/2026-01-01_example-completed/result.md" \
   "$TARGET/archive/2026-01-01_example-completed/result.md"
+
+write_file \
+  "$SCAFFOLD_DIR/archive/2026-01-01_archived-example/brief.md" \
+  "$TARGET/archive/2026-01-01_archived-example/brief.md"
+
+write_file \
+  "$SCAFFOLD_DIR/archive/2026-01-01_archived-example/status.md" \
+  "$TARGET/archive/2026-01-01_archived-example/status.md"
+
+write_file \
+  "$SCAFFOLD_DIR/archive/2026-01-01_archived-example/result.md" \
+  "$TARGET/archive/2026-01-01_archived-example/result.md"
 echo ""
 
 # ─── Step 3: Copy dashboard ──────────────────────────────────────────────────
@@ -198,6 +232,22 @@ if [[ -d "$DASHBOARD_SRC" ]]; then
   done
 else
   echo "  → Dashboard source not found — skipping (will be added in Phase 2)"
+fi
+echo ""
+
+# ─── Step 3b: Copy scripts ───────────────────────────────────────────────────
+echo "→ Copying scripts..."
+SCRIPTS_SRC="$SCRIPT_DIR/scripts"
+if [[ -d "$SCRIPTS_SRC" ]]; then
+  for f in "$SCRIPTS_SRC"/*; do
+    [[ -f "$f" ]] || continue
+    fname="$(basename "$f")"
+    write_file "$f" "$TARGET/scripts/$fname"
+    # Make scripts executable
+    chmod +x "$TARGET/scripts/$fname" 2>/dev/null || true
+  done
+else
+  echo "  → Scripts source not found — skipping"
 fi
 echo ""
 
@@ -290,16 +340,31 @@ PROTOCOL_EOF
 fi
 echo ""
 
+# ─── Step 5: Write version tag ───────────────────────────────────────────────
+echo "→ Writing version tag..."
+VERSION_TAG_FILE="$TARGET/agentcomms-version"
+if [[ ! -f "$VERSION_TAG_FILE" ]]; then
+  echo "agentcomms-version: 1" > "$VERSION_TAG_FILE"
+  ok "agentcomms-version file"
+else
+  skip "agentcomms-version file"
+fi
+echo ""
+
 # ─── Success ─────────────────────────────────────────────────────────────────
 echo "─────────────────────────────────────────────────────"
 echo "  AgentComms is ready."
 echo ""
 echo "  Location:    $TARGET"
-echo "  Dashboard:   node $TARGET/dashboard/server.js"
-echo "               → http://localhost:7842"
+echo "  Dashboard:   bash $TARGET/dashboard/start.sh"
+echo "               → Starts at http://localhost:7843"
 echo ""
-echo "  Examples:    $TARGET/agents/example-agent/"
-echo "               $TARGET/threads/2026-01-01_example-thread/"
+echo "  Folder Structure:"
+echo "    agents/example-agent/        Your team's agent inboxes"
+echo "    threads/                     Active work"
+echo "    archive/                     Completed tasks"
+echo "    dashboard/                   Web UI + server"
+echo "    scripts/                     Operator tools (checkmail, etc.)"
 echo ""
 echo "  Next step:   See AGENT-ONBOARDING.md to add your first agent."
 echo "─────────────────────────────────────────────────────"

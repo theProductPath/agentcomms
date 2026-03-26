@@ -20,24 +20,29 @@ Agents check their inbox, read the signal, open the thread, do the work, write t
 
 ## Quick Start
 
+**The repo is the installer, not the destination.** `setup.sh` creates your AgentComms folder wherever you run it from. The dashboard, examples, and protocol files all live in that new folder — not in the repo you cloned.
+
 ```bash
-# 1. Clone the repo
+# 1. Clone the repo — this is the installer
 git clone https://github.com/theProductPath/agentcomms.git
 cd agentcomms
 
-# 2. Run setup — creates an AgentComms instance in ./AgentComms
-bash setup.sh
+# 2. Go to the folder where you want your AgentComms to live
+cd ~/Documents   # or wherever you prefer
 
-# 3. Start the dashboard
-node AgentComms/dashboard/server.js
-# → http://localhost:7842
+# 3. Run setup from there, pointing at the cloned repo
+bash ~/path/to/agentcomms/setup.sh
+
+# 4. Start the dashboard from your new AgentComms folder
+bash AgentComms/dashboard/start.sh
+# → Opens at http://localhost:7843
 ```
 
 That's it. You now have a working AgentComms instance with example files and a running dashboard.
 
 **Custom path or team name:**
 ```bash
-bash setup.sh --path ~/my-team/AgentComms --team "my-team"
+bash ~/path/to/agentcomms/setup.sh --path ~/my-team/AgentComms --team "my-team"
 ```
 
 ---
@@ -48,10 +53,9 @@ bash setup.sh --path ~/my-team/AgentComms --team "my-team"
 AgentComms/
 ├── agents/                          # One folder per agent
 │   └── <agent-name>/
-│       ├── inbox/                   # Routing signals land here
-│       │   ├── processed/           # Signals moved here after reading
-│       │   └── YYYY-MM-DD_slug.md   # Routing signal (pointer to thread)
-│       └── outbox/                  # Outbound signals (optional)
+│       └── inbox/                   # Routing signals land here
+│           ├── processed/           # Signals moved here after reading
+│           └── YYYY-MM-DD_slug.md   # Routing signal (pointer to thread)
 │
 ├── threads/                         # Active work — one folder per task
 │   └── YYYY-MM-DD_descriptive-slug/
@@ -64,10 +68,15 @@ AgentComms/
 ├── archive/                         # Completed threads (moved from threads/)
 │   └── YYYY-MM-DD_descriptive-slug/ # Same structure as threads/
 │
-├── dashboard/                       # Local dashboard
+├── dashboard/                       # Local dashboard (port 7843)
 │   ├── index.html
 │   ├── server.js
+│   ├── start.sh
 │   └── README.md
+│
+├── scripts/                         # Operator tools
+│   ├── inbox-snapshot.sh            # Checkmail command (email, Telegram, etc.)
+│   └── _thread_scan.py              # Helper for inbox snapshot
 │
 └── COMMUNICATION_PROTOCOL.md        # Protocol reference for all agents
 ```
@@ -93,18 +102,21 @@ Full details: see [`COMMUNICATION_PROTOCOL.md`](./COMMUNICATION_PROTOCOL.md) ins
 The dashboard gives operators a live view of the AgentComms instance — who has work waiting, what's in flight, what's blocked.
 
 ```bash
-# Start the dashboard
-node AgentComms/dashboard/server.js
+# Start the dashboard (auto-opens in browser)
+bash AgentComms/dashboard/start.sh
+
+# Don't auto-open browser
+bash AgentComms/dashboard/start.sh --no-open
 
 # Custom port
-node AgentComms/dashboard/server.js 8080
+bash AgentComms/dashboard/start.sh --port 8080
 ```
 
-Then open `http://localhost:7842` in your browser.
+The dashboard starts at `http://localhost:7843` by default. A **Stop** button in the header lets you shut down the server cleanly.
 
 **What it shows:**
 - **Stats bar** — agents active, messages in flight, threads open, archived count
-- **Agents panel** — one card per agent, with inbox count and last activity; agents with unread messages are highlighted
+- **Agents panel** — one card per agent, with inbox count and last activity; agents with unread messages are highlighted in amber
 - **Threads table** — all active threads, sortable by date/status/last updated; click a row for detail
 - **Thread detail shelf** — inline file viewer for briefs, results, Q&A files
 - **Activity map** — canvas view of agents as nodes and threads as connections between them
@@ -115,36 +127,82 @@ See [`dashboard/README.md`](./dashboard/README.md) for configuration details.
 
 ---
 
+## Inbox Snapshot
+
+Get a full view of every agent's inbox and all open threads delivered to any chat channel — no dashboard required.
+
+```bash
+# Run from anywhere with filesystem access
+bash AgentComms/scripts/inbox-snapshot.sh
+```
+
+**Sample output:**
+```
+📬 AgentComms Snapshot
+Thu Mar 26, 10:01 AM CT
+
+── AgentComms ──────────────────
+⚠️  Needs attention:
+  🔴 hairy — 2 unread (last active: 2026-03-24)
+     ↳ 2026-03-24_skill-request, 2026-03-24_weekly-check
+
+✅  Clear:
+  archy (last: 2026-03-25)
+  copy (last: 2026-03-26)
+
+── Open Threads ────────────────
+  📂 2026-03-20_conference-floor-rework-spec — IN PROGRESS
+  📂 2026-03-25_atp-overview-article — Ready for Review
+
+────────────────────────────────
+```
+
+**How it works:**
+- Scans all inbox folders and reports agents with unread signals first (backlog-first)
+- Shows last-active dates even for clear inboxes — stale agents surface even when technically "clear"
+- Filters out threads with terminal status (`done`, `closed`, `archived`, `pending-archive`, `complete`)
+- Outputs plain text — suitable for direct Telegram delivery or any other channel
+
+**Usage with an agent:** Configure an agent to run this script when it receives a natural-language trigger ("inbox check," "agent status," "how are the inboxes?"). The agent runs the script and returns the output inline in the conversation. No need to open the dashboard.
+
+**Configuring paths:** Edit the path constants at the top of `scripts/inbox-snapshot.sh`. The script ships pre-configured to work with an AgentComms instance created by `setup.sh`.
+
+See [`scripts/README.md`](./scripts/README.md) for full configuration details.
+
+---
+
 ## Adding an Agent
 
 See [`AGENT-ONBOARDING.md`](./AGENT-ONBOARDING.md) for full onboarding instructions.
 
-The short version: create a folder at `agents/<agent-name>/` with `inbox/`, `inbox/processed/`, and `outbox/` subfolders, then give the agent their inbox path. They're ready to receive tasks.
+The short version:
+
+1. Create their folder: `agents/<agent-name>/inbox/` and `agents/<agent-name>/inbox/processed/`
+2. Give the agent their inbox path: `~/path/to/AgentComms/agents/<agent-name>/inbox/`
+3. Optionally add them to `AGENT_EMOJIS` in `dashboard/server.js` so the dashboard renders their emoji
+4. Optionally set up inbox cron polling (see `AGENT-ONBOARDING.md`)
+
+They're now ready to receive tasks.
 
 ---
 
-## Adapting for Your Team
+## Operator Tools
 
-Three config points to wire up a new team:
+### Inbox Snapshot (checkmail)
 
-**1. `AGENTCOMMS` path in `dashboard/server.js`**
-```js
-const AGENTCOMMS = '/path/to/your/AgentComms';
+Get a full view of every agent's inbox and all open threads without opening the dashboard:
+
+```bash
+bash AgentComms/scripts/inbox-snapshot.sh
 ```
-Update this to point to your actual AgentComms instance folder.
 
-**2. `AGENT_EMOJIS` map in `dashboard/server.js`**
-```js
-const AGENT_EMOJIS = {
-  'ac-dev': '👨🏽‍💻',
-  'ac-pm':  '📊',
-  'ac-orch': '🎯',
-};
-```
-Add your agents here so the dashboard renders their emojis correctly.
+Use this to monitor team status via email, Telegram, or any other channel. Agents can also trigger it when they receive a natural-language "inbox check" request.
 
-**3. Home path in `dashboard/index.html`**
-There's a hardcoded home path used for constructing inbox file paths in the browser. Search for `AGENTCOMMS_PATH` in `index.html` and update it to match your instance.
+**Supported aliases:**
+- `checkmail` or `#checkmail`
+- `check mail`, `mailcheck`, `inbox check`, `agent status`
+
+See [`scripts/README.md`](./scripts/README.md) for full usage and configuration.
 
 ---
 
