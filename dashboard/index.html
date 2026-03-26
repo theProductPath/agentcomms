@@ -168,12 +168,12 @@
 
   /* ─── Inbox Panel (slide-in) ────────────────────────────────────────── */
   #inbox-panel {
-    position: absolute; left: var(--panel-w); top: 0; bottom: 0;
+    position: absolute; left: 0; top: 0; bottom: 0;
     width: var(--panel-w);
     background: var(--bg2);
     border-right: 1px solid var(--border);
     display: flex; flex-direction: column;
-    transform: translateX(-100%);
+    transform: translateX(calc(-1 * var(--panel-w)));
     transition: transform .2s ease;
     z-index: 10;
     overflow: hidden;
@@ -548,7 +548,16 @@ function connectSSE() {
 }
 
 // ─── Render Entry ────────────────────────────────────────────────────────────
+let isFirstRender = true;
+
 function render() {
+  // On first render, ensure inbox panel is closed so agents are visible
+  if (isFirstRender) {
+    document.getElementById('inbox-panel').classList.remove('open');
+    document.getElementById('main').classList.remove('inbox-open');
+    isFirstRender = false;
+  }
+  
   renderStats();
   renderAgents();
   renderThreads();
