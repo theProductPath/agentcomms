@@ -312,23 +312,26 @@
     display: flex; align-items: center; gap: 10px;
     border-bottom: 1px solid var(--border);
     cursor: pointer; user-select: none;
+    flex-wrap: wrap;
   }
-  .shelf-title { font-weight: 600; font-size: 13px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .shelf-close { color: var(--muted); font-size: 16px; line-height: 1; }
+  .shelf-title { font-weight: 600; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .shelf-meta { display: flex; align-items: center; gap: 6px; flex: 1; }
+  .shelf-meta-item { font-size: 11px; color: var(--muted); }
+  .shelf-close { color: var(--muted); font-size: 16px; line-height: 1; margin-left: auto; }
   .shelf-body {
     display: flex; gap: 0;
     height: calc(var(--shelf-h) - 37px);
     overflow: hidden;
   }
   .shelf-col {
-    flex: 1; padding: 10px 14px; overflow-y: auto;
+    padding: 10px 14px; overflow-y: auto;
     border-right: 1px solid var(--border);
   }
   .shelf-col:last-child { border-right: none; }
+  .shelf-col-narrow { width: 140px; flex-shrink: 0; }
+  .shelf-col-files  { width: 180px; flex-shrink: 0; }
+  .shelf-col-viewer { flex: 1; }
   .shelf-col-label { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 8px; }
-
-  .shelf-info-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 12px; }
-  .shelf-info-key { color: var(--muted); width: 72px; flex-shrink: 0; }
 
   .shelf-file-list { display: flex; flex-direction: column; gap: 3px; }
   .shelf-file-item {
@@ -342,8 +345,6 @@
 
   /* File viewer (slides into shelf) */
   #file-viewer {
-    width: 320px; flex-shrink: 0;
-    border-left: 1px solid var(--border);
     display: flex; flex-direction: column;
     overflow: hidden;
     background: var(--bg);
@@ -474,27 +475,24 @@
         <div id="thread-shelf">
           <div class="shelf-header" onclick="toggleShelf()">
             <div class="shelf-title" id="shelf-title">Thread details</div>
+            <div class="shelf-meta" id="shelf-meta"></div>
             <div class="shelf-close">›</div>
           </div>
           <div class="shelf-body">
-            <div class="shelf-col" id="shelf-info">
-              <div class="shelf-col-label">Thread Info</div>
-              <div id="shelf-info-content"></div>
-            </div>
-            <div class="shelf-col" id="shelf-files">
-              <div class="shelf-col-label">Files</div>
-              <div class="shelf-file-list" id="shelf-file-list"></div>
-            </div>
-            <div class="shelf-col" id="shelf-agents">
+            <div class="shelf-col shelf-col-narrow" id="shelf-agents">
               <div class="shelf-col-label">Agents</div>
               <div class="agent-chips" id="shelf-agents-content"></div>
             </div>
-            <div id="file-viewer" class="hidden">
+            <div class="shelf-col shelf-col-files" id="shelf-files">
+              <div class="shelf-col-label">Files</div>
+              <div class="shelf-file-list" id="shelf-file-list"></div>
+            </div>
+            <div class="shelf-col shelf-col-viewer" id="file-viewer">
               <div class="file-viewer-header">
                 <div class="file-viewer-name" id="file-viewer-name"></div>
                 <button onclick="closeFileViewer()" style="color:var(--muted);font-size:16px;line-height:1;">×</button>
               </div>
-              <div class="file-viewer-body" id="file-viewer-body">Loading…</div>
+              <div class="file-viewer-body" id="file-viewer-body">← Select a file to preview</div>
             </div>
           </div>
         </div>
@@ -786,13 +784,13 @@ function openShelf(slug) {
   const readable = slug.replace(/^\d{4}-\d{2}-\d{2}_/, '').replace(/-/g, ' ');
   document.getElementById('shelf-title').textContent = readable;
 
-  // Info
-  document.getElementById('shelf-info-content').innerHTML = `
-    <div class="shelf-info-row"><div class="shelf-info-key">Status</div><span class="status-pill status-${thread.status}">${thread.status}</span></div>
-    <div class="shelf-info-row"><div class="shelf-info-key">Date</div>${thread.date}</div>
-    <div class="shelf-info-row"><div class="shelf-info-key">Updated</div>${thread.lastActive}</div>
-    <div class="shelf-info-row"><div class="shelf-info-key">Zone</div><span style="color:var(--muted)">${thread.zone}</span></div>
-  `;
+  // Meta chips in header bar
+  const zoneLabel = thread.zone === 'archive' ? '📦 archive' : '🗂 active';
+  document.getElementById('shelf-meta').innerHTML =
+    `<span class="status-pill status-${thread.status}">${thread.status}</span>` +
+    `<span class="shelf-meta-item">${thread.date}</span>` +
+    `<span class="shelf-meta-item">· ${thread.lastActive}</span>` +
+    `<span class="shelf-meta-item">· ${zoneLabel}</span>`;
 
   // Files
   const fileList = document.getElementById('shelf-file-list');
@@ -824,7 +822,7 @@ function toggleShelf() {
 }
 
 function viewShelfFile(name, filePath) {
-  // Toggle
+  // Toggle off if already active
   const el = document.getElementById(`sfi-${encodeId(name)}`);
   if (el && el.classList.contains('active')) {
     closeFileViewer();
@@ -834,8 +832,6 @@ function viewShelfFile(name, filePath) {
   document.querySelectorAll('.shelf-file-item.active').forEach(e => e.classList.remove('active'));
   if (el) el.classList.add('active');
 
-  const viewer = document.getElementById('file-viewer');
-  viewer.classList.remove('hidden');
   document.getElementById('file-viewer-name').textContent = name;
   document.getElementById('file-viewer-body').textContent = 'Loading…';
 
@@ -845,7 +841,8 @@ function viewShelfFile(name, filePath) {
 }
 
 function closeFileViewer() {
-  document.getElementById('file-viewer').classList.add('hidden');
+  document.getElementById('file-viewer-name').textContent = '';
+  document.getElementById('file-viewer-body').textContent = '← Select a file to preview';
   document.querySelectorAll('.shelf-file-item.active').forEach(e => e.classList.remove('active'));
 }
 
