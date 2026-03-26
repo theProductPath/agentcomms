@@ -33,6 +33,7 @@ echo "── AgentComms ──────────────────"
 
 BACKLOGGED=()
 CLEAR=()
+NOW_TS=$(date +%s)
 
 if [ ! -d "$AGENTCOMMS" ]; then
   echo "  (agents folder not found: $AGENTCOMMS)"
@@ -47,7 +48,30 @@ else
     [ -z "$last_active" ] && last_active="never"
 
     if [ "$unread" -gt 0 ]; then
-      BACKLOGGED+=("$agent|$unread|$last_active")
+      # Calculate age of oldest unread file
+      oldest_ts=$(python3 << 'PYEOF' 2>/dev/null
+import os, sys
+inbox = sys.argv[1]
+try:
+  mtimes = [int(os.path.getmtime(os.path.join(inbox, f))) for f in os.listdir(inbox) 
+            if f.endswith('.md') and os.path.isfile(os.path.join(inbox, f))]
+  print(min(mtimes) if mtimes else '')
+except:
+  print('')
+PYEOF
+)
+      age_str="?"
+      if [ -n "$oldest_ts" ]; then
+        age_secs=$(( NOW_TS - oldest_ts ))
+        if [ "$age_secs" -lt 3600 ]; then
+          age_str="$((age_secs / 60))m"
+        elif [ "$age_secs" -lt 86400 ]; then
+          age_str="$((age_secs / 3600))h"
+        else
+          age_str="$((age_secs / 86400))d"
+        fi
+      fi
+      BACKLOGGED+=("$agent|$unread|$age_str")
     else
       CLEAR+=("$agent|$last_active")
     fi
@@ -58,21 +82,14 @@ fi
 if [ ${#BACKLOGGED[@]} -gt 0 ]; then
   echo "⚠️  Needs attention:"
   for entry in "${BACKLOGGED[@]}"; do
-    IFS='|' read -r agent unread last_active <<< "$entry"
-    files=$(find "$AGENTCOMMS/$agent/inbox" -maxdepth 1 -type f -name "*.md" 2>/dev/null \
-      | xargs -I{} basename {} | head -3 | sed 's/.md$//' | tr '\n' ', ' | sed 's/, $//')
-    echo "  🔴 $agent — $unread unread (last active: $last_active)"
-    [ -n "$files" ] && echo "     ↳ $files"
+    IFS='|' read -r agent unread age_str <<< "$entry"
+    printf "  🔴 %-16s %2d  %5s\n" "$agent" "$unread" "$age_str"
   done
+  echo "✅ ${#CLEAR[@]} others clear"
   echo ""
-fi
-
-if [ ${#CLEAR[@]} -gt 0 ]; then
-  echo "✅  Clear:"
-  for entry in "${CLEAR[@]}"; do
-    IFS='|' read -r agent last_active <<< "$entry"
-    echo "  $agent (last: $last_active)"
-  done
+elif [ ${#CLEAR[@]} -gt 0 ]; then
+  echo "✅  All clear (${#CLEAR[@]} agents)"
+  echo ""
 fi
 
 echo ""

@@ -1,7 +1,7 @@
 # AgentComms
 
 **A structured file-system communication layer for agent teams.**
-
+`agentcomms-version: 1`
 Most agent teams hit the same problem: every handoff routes through a human. The human becomes the relay — forwarding context, re-explaining tasks, translating between agents. AgentComms removes that bottleneck. It's a local folder structure (inboxes, threads, archive) plus an optional dashboard that agents use to coordinate directly. No cloud, no npm, no build step — just a shell script and a folder convention that works out of the box.
 
 ---
@@ -20,22 +20,22 @@ Agents check their inbox, read the signal, open the thread, do the work, write t
 
 ## Quick Start
 
-**The repo is the installer, not the destination.** `setup.sh` creates your AgentComms folder wherever you run it from. The dashboard, examples, and protocol files all live in that new folder — not in the repo you cloned.
+**The repo is the installer, not the destination.** `setup.sh` creates your AgentComms instance in a new folder of your choosing. All files — dashboard, examples, and protocols — live in that new folder, not in the repo you cloned.
 
 ```bash
-# 1. Clone the repo — this is the installer
+# 1. Clone the repo — this is the installer only
 git clone https://github.com/theProductPath/agentcomms.git
 cd agentcomms
 
 # 2. Go to the folder where you want your AgentComms to live
-cd ~/Documents   # or wherever you prefer
+cd ~/Documents   # or ~/my-team or wherever you prefer
 
-# 3. Run setup from there, pointing at the cloned repo
+# 3. Run setup from there, pointing to the cloned repo
 bash ~/path/to/agentcomms/setup.sh
 
-# 4. Start the dashboard from your new AgentComms folder
+# 4. Start the dashboard from your AgentComms folder
 bash AgentComms/dashboard/start.sh
-# → Opens at http://localhost:7843
+# → Dashboard opens at http://localhost:7843
 ```
 
 That's it. You now have a working AgentComms instance with example files and a running dashboard.
@@ -173,16 +173,28 @@ See [`scripts/README.md`](./scripts/README.md) for full configuration details.
 
 ## Adding an Agent
 
-See [`AGENT-ONBOARDING.md`](./AGENT-ONBOARDING.md) for full onboarding instructions.
+To bring a new agent into your AgentComms instance:
 
-The short version:
+1. **Create their inbox folders:**
+   ```bash
+   mkdir -p AgentComms/agents/<agent-name>/inbox/processed
+   ```
 
-1. Create their folder: `agents/<agent-name>/inbox/` and `agents/<agent-name>/inbox/processed/`
-2. Give the agent their inbox path: `~/path/to/AgentComms/agents/<agent-name>/inbox/`
-3. Optionally add them to `AGENT_EMOJIS` in `dashboard/server.js` so the dashboard renders their emoji
-4. Optionally set up inbox cron polling (see `AGENT-ONBOARDING.md`)
+2. **Share their inbox path** with the agent (update their workspace config):
+   ```
+   ~/path/to/AgentComms/agents/<agent-name>/inbox/
+   ```
 
-They're now ready to receive tasks.
+3. *(Optional)* **Add their emoji** to the dashboard:
+   Edit `AgentComms/dashboard/server.js`, find `AGENT_EMOJIS`, and add:
+   ```js
+   'agent-name': '🎯',  // or any emoji you like
+   ```
+
+4. *(Optional)* **Set up automated inbox polling:**
+   See [`AGENT-ONBOARDING.md`](./AGENT-ONBOARDING.md) for cron job setup so agents auto-check their inbox on a schedule.
+
+That's it. They can now receive tasks via inbox signals and start working.
 
 ---
 

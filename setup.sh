@@ -138,11 +138,11 @@ make_dir "$TARGET/agents/example-agent"
 make_dir "$TARGET/agents/example-agent/inbox"
 make_dir "$TARGET/agents/example-agent/inbox/processed"
 make_dir "$TARGET/threads"
-make_dir "$TARGET/threads/2026-01-01_example-thread"
-make_dir "$TARGET/threads/2026-01-02_in-progress-example"
+make_dir "$TARGET/threads/2026-03-26_first-task"
+make_dir "$TARGET/threads/2026-03-26_first-task"
 make_dir "$TARGET/archive"
-make_dir "$TARGET/archive/2026-01-01_example-completed"
-make_dir "$TARGET/archive/2026-01-01_archived-example"
+make_dir "$TARGET/archive/2026-03-26_completed-task"
+make_dir "$TARGET/archive/2026-03-26_completed-task"
 make_dir "$TARGET/dashboard"
 make_dir "$TARGET/scripts"
 echo ""
@@ -150,76 +150,76 @@ echo ""
 # ─── Step 2: Write example files ─────────────────────────────────────────────
 echo "→ Writing example files..."
 write_file \
-  "$SCAFFOLD_DIR/agents/example-agent/inbox/2026-01-01_example-signal-1.md" \
-  "$TARGET/agents/example-agent/inbox/2026-01-01_example-signal-1.md"
+  "$SCAFFOLD_DIR/agents/example-agent/inbox/2026-03-26_first-signal.md" \
+  "$TARGET/agents/example-agent/inbox/2026-03-26_first-signal.md"
 
 write_file \
-  "$SCAFFOLD_DIR/agents/example-agent/inbox/2026-01-02_in-progress-signal.md" \
-  "$TARGET/agents/example-agent/inbox/2026-01-02_in-progress-signal.md"
+  "$SCAFFOLD_DIR/agents/example-agent/inbox/2026-03-26_second-signal.md" \
+  "$TARGET/agents/example-agent/inbox/2026-03-26_second-signal.md"
 
 write_file \
   "$SCAFFOLD_DIR/agents/example-agent/inbox/processed/.keep" \
   "$TARGET/agents/example-agent/inbox/processed/.keep"
 
 write_file \
-  "$SCAFFOLD_DIR/agents/example-agent/inbox/processed/2026-01-01_completed-signal.md" \
-  "$TARGET/agents/example-agent/inbox/processed/2026-01-01_completed-signal.md"
+  "$SCAFFOLD_DIR/agents/example-agent/inbox/processed/2026-03-25_processed-example.md" \
+  "$TARGET/agents/example-agent/inbox/processed/2026-03-25_processed-example.md"
 
 write_file \
-  "$SCAFFOLD_DIR/threads/2026-01-01_example-thread/brief.md" \
-  "$TARGET/threads/2026-01-01_example-thread/brief.md"
+  "$SCAFFOLD_DIR/threads/2026-03-26_first-task/brief.md" \
+  "$TARGET/threads/2026-03-26_first-task/brief.md"
 
 write_file \
-  "$SCAFFOLD_DIR/threads/2026-01-01_example-thread/context.md" \
-  "$TARGET/threads/2026-01-01_example-thread/context.md"
+  "$SCAFFOLD_DIR/threads/2026-03-26_first-task/context.md" \
+  "$TARGET/threads/2026-03-26_first-task/context.md"
 
 write_file \
-  "$SCAFFOLD_DIR/threads/2026-01-01_example-thread/status.md" \
-  "$TARGET/threads/2026-01-01_example-thread/status.md"
+  "$SCAFFOLD_DIR/threads/2026-03-26_first-task/status.md" \
+  "$TARGET/threads/2026-03-26_first-task/status.md"
 
 write_file \
-  "$SCAFFOLD_DIR/threads/2026-01-01_example-thread/result.md" \
-  "$TARGET/threads/2026-01-01_example-thread/result.md"
+  "$SCAFFOLD_DIR/threads/2026-03-26_first-task/result.md" \
+  "$TARGET/threads/2026-03-26_first-task/result.md"
 
 write_file \
-  "$SCAFFOLD_DIR/threads/2026-01-02_in-progress-example/brief.md" \
-  "$TARGET/threads/2026-01-02_in-progress-example/brief.md"
+  "$SCAFFOLD_DIR/threads/2026-03-26_first-task/brief.md" \
+  "$TARGET/threads/2026-03-26_first-task/brief.md"
 
 write_file \
-  "$SCAFFOLD_DIR/threads/2026-01-02_in-progress-example/context.md" \
-  "$TARGET/threads/2026-01-02_in-progress-example/context.md"
+  "$SCAFFOLD_DIR/threads/2026-03-26_first-task/context.md" \
+  "$TARGET/threads/2026-03-26_first-task/context.md"
 
 write_file \
-  "$SCAFFOLD_DIR/threads/2026-01-02_in-progress-example/status.md" \
-  "$TARGET/threads/2026-01-02_in-progress-example/status.md"
+  "$SCAFFOLD_DIR/threads/2026-03-26_first-task/status.md" \
+  "$TARGET/threads/2026-03-26_first-task/status.md"
 
 write_file \
-  "$SCAFFOLD_DIR/threads/2026-01-02_in-progress-example/result.md" \
-  "$TARGET/threads/2026-01-02_in-progress-example/result.md"
+  "$SCAFFOLD_DIR/threads/2026-03-26_first-task/result.md" \
+  "$TARGET/threads/2026-03-26_first-task/result.md"
 
 write_file \
-  "$SCAFFOLD_DIR/archive/2026-01-01_example-completed/brief.md" \
-  "$TARGET/archive/2026-01-01_example-completed/brief.md"
+  "$SCAFFOLD_DIR/archive/2026-03-26_completed-task/brief.md" \
+  "$TARGET/archive/2026-03-26_completed-task/brief.md"
 
 write_file \
-  "$SCAFFOLD_DIR/archive/2026-01-01_example-completed/status.md" \
-  "$TARGET/archive/2026-01-01_example-completed/status.md"
+  "$SCAFFOLD_DIR/archive/2026-03-26_completed-task/status.md" \
+  "$TARGET/archive/2026-03-26_completed-task/status.md"
 
 write_file \
-  "$SCAFFOLD_DIR/archive/2026-01-01_example-completed/result.md" \
-  "$TARGET/archive/2026-01-01_example-completed/result.md"
+  "$SCAFFOLD_DIR/archive/2026-03-26_completed-task/result.md" \
+  "$TARGET/archive/2026-03-26_completed-task/result.md"
 
 write_file \
-  "$SCAFFOLD_DIR/archive/2026-01-01_archived-example/brief.md" \
-  "$TARGET/archive/2026-01-01_archived-example/brief.md"
+  "$SCAFFOLD_DIR/archive/2026-03-26_completed-task/brief.md" \
+  "$TARGET/archive/2026-03-26_completed-task/brief.md"
 
 write_file \
-  "$SCAFFOLD_DIR/archive/2026-01-01_archived-example/status.md" \
-  "$TARGET/archive/2026-01-01_archived-example/status.md"
+  "$SCAFFOLD_DIR/archive/2026-03-26_completed-task/status.md" \
+  "$TARGET/archive/2026-03-26_completed-task/status.md"
 
 write_file \
-  "$SCAFFOLD_DIR/archive/2026-01-01_archived-example/result.md" \
-  "$TARGET/archive/2026-01-01_archived-example/result.md"
+  "$SCAFFOLD_DIR/archive/2026-03-26_completed-task/result.md" \
+  "$TARGET/archive/2026-03-26_completed-task/result.md"
 echo ""
 
 # ─── Step 3: Copy dashboard ──────────────────────────────────────────────────
@@ -340,14 +340,33 @@ PROTOCOL_EOF
 fi
 echo ""
 
-# ─── Step 5: Write version tag ───────────────────────────────────────────────
+# ─── Step 5: Write version tag to README ────────────────────────────────────
 echo "→ Writing version tag..."
-VERSION_TAG_FILE="$TARGET/agentcomms-version"
-if [[ ! -f "$VERSION_TAG_FILE" ]]; then
-  echo "agentcomms-version: 1" > "$VERSION_TAG_FILE"
-  ok "agentcomms-version file"
+README_FILE="$TARGET/README.md"
+if [[ -f "$README_FILE" ]]; then
+  # Check if version tag already exists
+  if ! grep -q "agentcomms-version:" "$README_FILE"; then
+    # Add version tag near the top of README
+    sed -i '' '1a\
+<!-- agentcomms-version: 1 -->
+' "$README_FILE"
+    ok "README.md version tag"
+  else
+    skip "README.md version tag (already present)"
+  fi
 else
-  skip "agentcomms-version file"
+  # If README doesn't exist, create a minimal one with the tag
+  cat > "$README_FILE" << 'README_EOF'
+<!-- agentcomms-version: 1 -->
+
+# AgentComms · v0.6
+
+*Local agent communication layer. See the repo for full documentation.*
+
+---
+For setup and usage instructions, see [theProductPath/agentcomms](https://github.com/theProductPath/agentcomms)
+README_EOF
+  ok "README.md"
 fi
 echo ""
 
