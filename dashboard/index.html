@@ -105,6 +105,8 @@
     border-right: 1px solid var(--border);
     display: flex; flex-direction: column;
     overflow: hidden;
+    position: relative;
+    z-index: 2;
   }
   .panel-header {
     padding: 10px 12px 8px;
@@ -167,18 +169,25 @@
   .tag.inbox-tag { background: rgba(245,158,11,.15); border-color: var(--amber); color: var(--amber); }
 
   /* ─── Inbox Panel (slide-in) ────────────────────────────────────────── */
+  /* Sits adjacent to agents-panel, slides right into view, pushes #main */
   #inbox-panel {
-    position: fixed; left: 0; top: var(--header-h); bottom: 0;
-    width: var(--panel-w);
+    width: 0;
+    flex-shrink: 0;
     background: var(--bg2);
-    border-right: 1px solid var(--border);
+    border-right: 0px solid var(--border);
     display: flex; flex-direction: column;
-    transform: translateX(calc(-1 * var(--panel-w)));
-    transition: transform .2s ease;
-    z-index: 9;
     overflow: hidden;
+    transition: width .2s ease, border-right-width .2s ease;
+    z-index: 1;
   }
-  #inbox-panel.open { transform: translateX(0); }
+  #inbox-panel.open {
+    width: var(--panel-w);
+    border-right-width: 1px;
+  }
+  #inbox-panel .panel-header,
+  #inbox-panel #inbox-panel-content {
+    min-width: var(--panel-w);
+  }
   #inbox-panel .panel-header { flex-shrink: 0; }
   #inbox-panel-content { overflow-y: auto; flex: 1; padding: 8px; display: flex; flex-direction: column; gap: 8px; }
   .inbox-section-label {
@@ -222,7 +231,7 @@
     overflow: hidden;
     transition: padding-left .2s ease;
   }
-  #main.inbox-open { padding-left: var(--panel-w); }
+  /* #main.inbox-open — no longer needed; inbox-panel is in flex flow */
 
   /* ─── Main Toolbar ──────────────────────────────────────────────────── */
   #main-toolbar {
