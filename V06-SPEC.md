@@ -105,6 +105,19 @@ Dashboard:   bash AgentComms/dashboard/start.sh
              → Opens at http://localhost:7842
 ```
 
+**4e. README must never expose raw `node` invocation — FIX REQUIRED (post-validation feedback)**
+The README currently shows `node dashboard/server.js` in some places. This is a documentation bug. Human users who run this directly will tie up a terminal window with no obvious way to stop it.
+
+- **Remove all `node dashboard/server.js` invocations from README.md** — only `bash dashboard/start.sh` should be shown
+- `start.sh` success output must make the background mode explicit:
+  ```
+  AgentComms Dashboard started in the background (PID 12345)
+  → http://localhost:7842
+  Stop it: click "Stop Server" in the dashboard, or run: kill 12345
+  ```
+- Add a callout to the README Dashboard section:
+  > **Note:** `start.sh` runs the server in the background and returns your terminal. Use the ⏹ Stop Server button in the dashboard UI, or kill the PID shown at startup. Do not run `node dashboard/server.js` directly unless you want to tie up a terminal window.
+
 ---
 
 ## Item 5 — Dashboard: Instance Switching + Management

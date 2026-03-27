@@ -97,9 +97,39 @@ File requests outside the AgentComms folder return HTTP 403.
 
 ---
 
-## Known Gaps (v0.7)
+## Multi-Instance Support (v0.7)
 
-**Multi-instance watcher limitation:** When switching instances using the dashboard dropdown, the file watcher continues monitoring only the default instance. SSE updates (live refresh) won't fire for non-default instances until the server is restarted. Switching instances works for data loading, but real-time updates are limited. This is a known limitation and will be fixed in v0.7.
+The dashboard supports multiple AgentComms instances via the instance dropdown in the header.
+
+**Switching instances:**
+- Select a different instance from the dropdown — data and live updates switch to the new instance immediately
+- The file watcher is rewired server-side so SSE (live) updates reflect the selected instance
+- Add new instances with the **＋** button; remove non-built-in instances with **✕**
+
+**Adding an instance:**
+1. Click **＋** in the header
+2. Enter the folder path and click **Validate** — the server checks for `agents/`, `threads/`, `archive/`, and `agentcomms-version`
+3. Enter a display name and a short key (no spaces)
+4. Click **Add Instance**
+
+**instances.json** lives in the `dashboard/` folder. It is written by `setup.sh` and persists across server restarts.
+
+---
+
+## Endpoints
+
+| Endpoint | Description |
+|---|---|
+| `GET /` | Serves `index.html` |
+| `GET /data?instance=<key>` | Returns full JSON snapshot for the given instance |
+| `GET /events?instance=<key>` | SSE stream for live updates |
+| `GET /instances` | Lists all configured instances |
+| `POST /instances/validate` | Validates a folder path as a valid AgentComms instance |
+| `POST /instances/add` | Adds a new instance to instances.json |
+| `POST /instances/remove` | Removes a non-builtin instance |
+| `POST /switch-instance` | Rewires the server-side file watcher to a new instance |
+| `GET /file?path=<path>` | Serves a file — path-constrained to known instance folders |
+| `POST /shutdown` | Cleanly shuts down the dashboard server |
 
 ---
 

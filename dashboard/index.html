@@ -46,11 +46,12 @@
     flex-shrink: 0;
     gap: 12px;
   }
-  .logo { font-weight: 700; font-size: 14px; letter-spacing: .02em; }
+  .logo { font-weight: 700; font-size: 14px; letter-spacing: .02em; white-space: nowrap; }
   .logo span { color: var(--muted); font-weight: 400; }
   #live-indicator {
     display: flex; align-items: center; gap: 6px;
     font-size: 11px; color: var(--muted);
+    white-space: nowrap;
   }
   .live-dot {
     width: 8px; height: 8px; border-radius: 50%;
@@ -59,13 +60,47 @@
   .live-dot.disconnected { background: var(--red); }
   @keyframes pulse-live { 0%,100%{opacity:1} 50%{opacity:.4} }
   .live-dot.connected { animation: pulse-live 2s infinite; }
-  
+
+  /* Instance switcher */
+  #instance-area {
+    display: flex; align-items: center; gap: 6px;
+    flex: 1; max-width: 340px; min-width: 0;
+  }
+  #instance-select {
+    flex: 1; min-width: 0;
+    background: var(--bg3); border: 1px solid var(--border);
+    color: var(--text); font: 12px/1 'Inter', system-ui, sans-serif;
+    padding: 5px 8px; border-radius: 4px;
+    cursor: pointer;
+  }
+  #instance-select:focus { outline: none; border-color: var(--indigo); }
+  .instance-action-btn {
+    padding: 5px 8px; border-radius: 4px; font-size: 12px;
+    background: transparent; border: 1px solid var(--border); color: var(--muted);
+    flex-shrink: 0;
+    transition: all .15s;
+  }
+  .instance-action-btn:hover { background: var(--bg3); border-color: var(--muted); color: var(--text); }
+  .instance-action-btn.danger:hover { border-color: var(--red); color: var(--red); }
+
+  #compat-warning {
+    display: none;
+    background: rgba(245,158,11,.12);
+    border: 1px solid rgba(245,158,11,.4);
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 11px;
+    color: var(--amber);
+    white-space: nowrap;
+  }
+
   .header-btn {
     padding: 6px 12px; border-radius: 4px;
     font-size: 12px; font-weight: 500;
     background: transparent; border: 1px solid var(--border);
     color: var(--text);
     transition: all .15s;
+    white-space: nowrap;
   }
   .header-btn:hover { background: var(--bg3); border-color: var(--muted); }
   .stop-btn { color: var(--red); border-color: var(--red); }
@@ -89,28 +124,18 @@
   .stat-value.indigo { color: var(--indigo); }
   .stat-value.muted  { color: var(--muted); }
 
-  /* ─── Body (agents + main) ─────────────────────────────────────────── */
-  #body {
-    display: flex;
-    flex: 1;
-    overflow: hidden;
-    position: relative;
-  }
+  /* ─── Body ─────────────────────────────────────────────────────────── */
+  #body { display: flex; flex: 1; overflow: hidden; position: relative; }
 
   /* ─── Agents Panel ─────────────────────────────────────────────────── */
   #agents-panel {
-    width: var(--panel-w);
-    flex-shrink: 0;
-    background: var(--bg2);
-    border-right: 1px solid var(--border);
-    display: flex; flex-direction: column;
-    overflow: hidden;
-    position: relative;
-    z-index: 2;
+    width: var(--panel-w); flex-shrink: 0;
+    background: var(--bg2); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; overflow: hidden;
+    position: relative; z-index: 2;
   }
   .panel-header {
-    padding: 10px 12px 8px;
-    border-bottom: 1px solid var(--border);
+    padding: 10px 12px 8px; border-bottom: 1px solid var(--border);
     display: flex; align-items: center; justify-content: space-between;
     flex-shrink: 0;
   }
@@ -127,17 +152,14 @@
 
   .agent-card {
     padding: 10px 12px; border-radius: var(--radius);
-    border: 1px solid var(--border);
-    cursor: pointer;
+    border: 1px solid var(--border); cursor: pointer;
     transition: border-color .15s, background .15s;
-    background: var(--bg3);
+    background: var(--bg3); position: relative;
   }
   .agent-card:hover { border-color: var(--indigo); background: #1d2236; }
   .agent-card.selected { border-color: var(--indigo); background: #1d2236; }
-  .agent-card.has-inbox {
-    border-color: var(--amber);
-    background: #1d1a0f;
-  }
+  .agent-card.has-inbox { border-color: var(--amber); background: #1d1a0f; }
+  .agent-card.ghost { opacity: 0.55; border-style: dashed; }
   @keyframes glow-amber { 0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.3)} 50%{box-shadow:0 0 8px 2px rgba(245,158,11,.2)} }
   .agent-card.has-inbox { animation: glow-amber 2.5s infinite; }
   .agent-card.has-inbox:hover, .agent-card.has-inbox.selected { animation: none; box-shadow: 0 0 0 2px var(--amber); }
@@ -148,14 +170,10 @@
     position: absolute; top: -4px; right: -6px;
     background: var(--amber); color: #000;
     font-size: 9px; font-weight: 700;
-    padding: 1px 4px; border-radius: 100px;
-    line-height: 1.4;
+    padding: 1px 4px; border-radius: 100px; line-height: 1.4;
   }
   .agent-name { font-weight: 600; font-size: 13px; flex: 1; }
-  .agent-dot {
-    width: 7px; height: 7px; border-radius: 50%;
-    background: var(--gray); flex-shrink: 0;
-  }
+  .agent-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gray); flex-shrink: 0; }
   .agent-dot.active { background: var(--green); }
   @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.3} }
   .agent-dot.inbox { background: var(--amber); animation: pulse-dot 1.5s infinite; }
@@ -167,33 +185,21 @@
     background: var(--bg); border: 1px solid var(--border); color: var(--muted);
   }
   .tag.inbox-tag { background: rgba(245,158,11,.15); border-color: var(--amber); color: var(--amber); }
+  .tag.warn-tag  { background: rgba(245,158,11,.12); border-color: rgba(245,158,11,.4); color: var(--amber); }
+  .tag.ghost-tag { background: rgba(107,114,128,.12); border-color: var(--border); color: var(--muted); }
 
-  /* ─── Inbox Panel (slide-in) ────────────────────────────────────────── */
-  /* Sits adjacent to agents-panel, slides right into view, pushes #main */
+  /* ─── Inbox Panel ───────────────────────────────────────────────────── */
   #inbox-panel {
-    width: 0;
-    flex-shrink: 0;
-    background: var(--bg2);
-    border-right: 0px solid var(--border);
-    display: flex; flex-direction: column;
-    overflow: hidden;
-    transition: width .2s ease, border-right-width .2s ease;
-    z-index: 1;
+    width: 0; flex-shrink: 0;
+    background: var(--bg2); border-right: 0px solid var(--border);
+    display: flex; flex-direction: column; overflow: hidden;
+    transition: width .2s ease, border-right-width .2s ease; z-index: 1;
   }
-  #inbox-panel.open {
-    width: var(--panel-w);
-    border-right-width: 1px;
-  }
-  #inbox-panel .panel-header,
-  #inbox-panel #inbox-panel-content {
-    min-width: var(--panel-w);
-  }
+  #inbox-panel.open { width: var(--panel-w); border-right-width: 1px; }
+  #inbox-panel .panel-header, #inbox-panel #inbox-panel-content { min-width: var(--panel-w); }
   #inbox-panel .panel-header { flex-shrink: 0; }
   #inbox-panel-content { overflow-y: auto; flex: 1; padding: 8px; display: flex; flex-direction: column; gap: 8px; }
-  .inbox-section-label {
-    font-size: 10px; text-transform: uppercase; letter-spacing: .08em;
-    color: var(--muted); padding: 4px 4px 2px;
-  }
+  .inbox-section-label { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); padding: 4px 4px 2px; }
   .inbox-file-card {
     background: var(--bg3); border: 1px solid var(--border);
     border-radius: var(--radius); overflow: hidden; cursor: pointer;
@@ -201,54 +207,31 @@
   }
   .inbox-file-card:hover { border-color: var(--amber); }
   .inbox-file-card.unread { border-color: rgba(245,158,11,.5); }
-  .inbox-file-header {
-    padding: 8px 10px;
-    display: flex; align-items: center; justify-content: space-between; gap: 6px;
-  }
+  .inbox-file-header { padding: 8px 10px; display: flex; align-items: center; justify-content: space-between; gap: 6px; }
   .inbox-file-name { font-size: 11px; font-weight: 600; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .inbox-file-hint { font-size: 10px; color: var(--muted); white-space: nowrap; }
   .inbox-file-content {
-    border-top: 1px solid var(--border);
-    padding: 10px;
+    border-top: 1px solid var(--border); padding: 10px;
     font-size: 11px; line-height: 1.6;
     font-family: 'Menlo', 'Monaco', monospace;
     white-space: pre-wrap; word-break: break-word;
-    color: var(--text);
-    background: var(--bg);
-    max-height: 260px; overflow-y: auto;
-    display: none;
+    color: var(--text); background: var(--bg);
+    max-height: 260px; overflow-y: auto; display: none;
   }
   .inbox-file-content.visible { display: block; }
-
   .processed-list { display: flex; flex-direction: column; gap: 2px; }
   .processed-item { font-size: 11px; color: var(--muted); padding: 3px 4px; }
   .clear-inbox { display: flex; align-items: center; gap: 6px; color: var(--green); font-size: 12px; padding: 8px 4px; }
 
-  /* ─── Main Content ──────────────────────────────────────────────────── */
-  #main {
-    flex: 1;
-    display: flex; flex-direction: column;
-    overflow: hidden;
-    transition: padding-left .2s ease;
-  }
-  /* #main.inbox-open — no longer needed; inbox-panel is in flex flow */
-
-  /* ─── Main Toolbar ──────────────────────────────────────────────────── */
+  /* ─── Main Content ─────────────────────────────────────────────────── */
+  #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
   #main-toolbar {
-    padding: 8px 14px;
-    border-bottom: 1px solid var(--border);
+    padding: 8px 14px; border-bottom: 1px solid var(--border);
     display: flex; align-items: center; gap: 8px;
-    flex-shrink: 0;
-    background: var(--bg2);
+    flex-shrink: 0; background: var(--bg2);
   }
-  .view-toggle {
-    display: flex; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-left: auto;
-  }
-  .view-btn {
-    padding: 4px 10px; font-size: 11px; color: var(--muted);
-    transition: background .15s, color .15s;
-    border: none;
-  }
+  .view-toggle { display: flex; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-left: auto; }
+  .view-btn { padding: 4px 10px; font-size: 11px; color: var(--muted); transition: background .15s, color .15s; border: none; }
   .view-btn.active { background: var(--indigo); color: #fff; }
   .view-btn:not(.active):hover { background: var(--bg3); }
 
@@ -286,10 +269,7 @@
   .status-unknown     { background: rgba(107,114,128,.15); color: var(--muted); border: 1px solid var(--border); }
 
   .agent-chips { display: flex; flex-wrap: wrap; gap: 3px; }
-  .agent-chip {
-    font-size: 10px; padding: 1px 6px; border-radius: 100px;
-    background: var(--bg3); border: 1px solid var(--border); color: var(--muted);
-  }
+  .agent-chip { font-size: 10px; padding: 1px 6px; border-radius: 100px; background: var(--bg3); border: 1px solid var(--border); color: var(--muted); }
 
   td.col-date    { width: 82px; color: var(--muted); font-size: 11px; white-space: nowrap; }
   td.col-status  { width: 110px; }
@@ -299,45 +279,31 @@
 
   /* ─── Thread Detail Shelf ───────────────────────────────────────────── */
   #thread-shelf {
-    border-top: 1px solid var(--border);
-    background: var(--bg2);
-    flex-shrink: 0;
-    overflow: hidden;
-    transition: height .2s ease;
-    height: 0;
+    border-top: 1px solid var(--border); background: var(--bg2);
+    flex-shrink: 0; overflow: hidden;
+    transition: height .2s ease; height: 0;
   }
   #thread-shelf.open { height: var(--shelf-h); }
   .shelf-header {
-    padding: 8px 14px;
-    display: flex; align-items: center; gap: 10px;
+    padding: 8px 14px; display: flex; align-items: center; gap: 10px;
     border-bottom: 1px solid var(--border);
-    cursor: pointer; user-select: none;
-    flex-wrap: wrap;
+    cursor: pointer; user-select: none; flex-wrap: wrap;
   }
   .shelf-title { font-weight: 600; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .shelf-meta { display: flex; align-items: center; gap: 6px; flex: 1; }
   .shelf-meta-item { font-size: 11px; color: var(--muted); }
   .shelf-close { color: var(--muted); font-size: 16px; line-height: 1; margin-left: auto; }
-  .shelf-body {
-    display: flex; gap: 0;
-    height: calc(var(--shelf-h) - 37px);
-    overflow: hidden;
-  }
-  .shelf-col {
-    padding: 10px 14px; overflow-y: auto;
-    border-right: 1px solid var(--border);
-  }
+  .shelf-body { display: flex; gap: 0; height: calc(var(--shelf-h) - 37px); overflow: hidden; }
+  .shelf-col { padding: 10px 14px; overflow-y: auto; border-right: 1px solid var(--border); }
   .shelf-col:last-child { border-right: none; }
   .shelf-col-narrow { width: 140px; flex-shrink: 0; }
   .shelf-col-files  { width: 180px; flex-shrink: 0; }
   .shelf-col-viewer { flex: 1; }
   .shelf-col-label { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 8px; }
-
   .shelf-file-list { display: flex; flex-direction: column; gap: 3px; }
   .shelf-file-item {
     display: flex; align-items: center; gap: 6px; padding: 4px 6px;
-    border-radius: 4px; font-size: 11px; cursor: pointer;
-    transition: background .1s;
+    border-radius: 4px; font-size: 11px; cursor: pointer; transition: background .1s;
   }
   .shelf-file-item:hover { background: var(--bg3); }
   .shelf-file-item.active { background: var(--bg3); color: var(--indigo); }
@@ -345,12 +311,7 @@
   .shelf-file-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .shelf-file-age { font-size: 10px; color: var(--muted); flex-shrink: 0; }
 
-  /* File viewer (slides into shelf) */
-  #file-viewer {
-    display: flex; flex-direction: column;
-    overflow: hidden;
-    background: var(--bg);
-  }
+  #file-viewer { display: flex; flex-direction: column; overflow: hidden; background: var(--bg); }
   .file-viewer-header {
     padding: 6px 10px; border-bottom: 1px solid var(--border);
     display: flex; align-items: center; gap: 6px; flex-shrink: 0;
@@ -366,23 +327,20 @@
     flex: 1; overflow-y: auto; padding: 10px;
     font-size: 11px; line-height: 1.7;
     font-family: 'Menlo', 'Monaco', monospace;
-    white-space: pre-wrap; word-break: break-word;
-    color: var(--text);
+    white-space: pre-wrap; word-break: break-word; color: var(--text);
   }
 
-  /* ─── File Modal (full-screen expand) ───────────────────────────────── */
+  /* ─── File Modal ────────────────────────────────────────────────────── */
   #file-modal {
-    display: none;
-    position: fixed; inset: 0; z-index: 100;
-    background: rgba(0,0,0,.65);
-    align-items: center; justify-content: center;
+    display: none; position: fixed; inset: 0; z-index: 100;
+    background: rgba(0,0,0,.65); align-items: center; justify-content: center;
   }
   #file-modal.open { display: flex; }
   #file-modal-inner {
-    background: var(--bg2); border: 1px solid var(--border);
-    border-radius: 8px; width: 780px; max-width: 94vw;
-    height: 80vh; display: flex; flex-direction: column;
-    overflow: hidden; box-shadow: 0 24px 64px rgba(0,0,0,.6);
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
+    width: 780px; max-width: 94vw; height: 80vh;
+    display: flex; flex-direction: column; overflow: hidden;
+    box-shadow: 0 24px 64px rgba(0,0,0,.6);
   }
   #file-modal-header {
     padding: 10px 14px; border-bottom: 1px solid var(--border);
@@ -399,14 +357,61 @@
     flex: 1; overflow-y: auto; padding: 16px 20px;
     font-size: 12px; line-height: 1.8;
     font-family: 'Menlo', 'Monaco', monospace;
-    white-space: pre-wrap; word-break: break-word;
-    color: var(--text);
+    white-space: pre-wrap; word-break: break-word; color: var(--text);
   }
 
-  /* ─── Map View ──────────────────────────────────────────────────────── */
-  #map-view {
-    flex: 1; display: none; position: relative; overflow: hidden;
+  /* ─── Add Instance Modal ────────────────────────────────────────────── */
+  #add-instance-modal {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,.65); align-items: center; justify-content: center;
   }
+  #add-instance-modal.open { display: flex; }
+  #add-instance-inner {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+    width: 520px; max-width: 94vw;
+    display: flex; flex-direction: column; overflow: hidden;
+    box-shadow: 0 24px 64px rgba(0,0,0,.6);
+  }
+  .modal-header {
+    padding: 14px 16px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .modal-title { font-weight: 700; font-size: 14px; }
+  .modal-close-btn { color: var(--muted); font-size: 22px; line-height: 1; padding: 2px 6px; border-radius: 3px; }
+  .modal-close-btn:hover { color: var(--text); background: var(--bg3); }
+  .modal-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+  .modal-footer { padding: 12px 16px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+  .form-input {
+    background: var(--bg3); border: 1px solid var(--border);
+    color: var(--text); font: 13px/1.4 'Inter', system-ui, sans-serif;
+    padding: 8px 10px; border-radius: 5px; width: 100%;
+  }
+  .form-input:focus { outline: none; border-color: var(--indigo); }
+  .form-row { display: flex; gap: 8px; align-items: flex-end; }
+  .form-row .form-input { flex: 1; }
+  .btn-primary {
+    padding: 7px 16px; border-radius: 5px; font-size: 13px; font-weight: 600;
+    background: var(--indigo); color: #fff; border: none;
+  }
+  .btn-primary:hover { background: #5254cc; }
+  .btn-secondary {
+    padding: 7px 16px; border-radius: 5px; font-size: 13px; font-weight: 500;
+    background: transparent; color: var(--muted); border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { background: var(--bg3); color: var(--text); }
+  .validate-result {
+    padding: 8px 10px; border-radius: 5px; font-size: 12px; line-height: 1.5;
+    display: none;
+  }
+  .validate-result.ok   { background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.3); color: var(--green); }
+  .validate-result.fail { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.3); color: var(--red); }
+  .validate-result.warn { background: rgba(245,158,11,.1); border: 1px solid rgba(245,158,11,.3); color: var(--amber); }
+  .validate-result.show { display: block; }
+
+  /* ─── Map View ──────────────────────────────────────────────────────── */
+  #map-view { flex: 1; display: none; position: relative; overflow: hidden; }
   #map-view.active { display: flex; align-items: center; justify-content: center; }
   #map-canvas { display: block; }
   #map-legend {
@@ -417,7 +422,7 @@
     display: flex; flex-direction: column; gap: 4px;
   }
   .legend-row { display: flex; align-items: center; gap: 6px; }
-  .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .legend-dot  { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
   .legend-line { width: 18px; height: 2px; border-radius: 1px; flex-shrink: 0; }
 
   /* ─── Misc ──────────────────────────────────────────────────────────── */
@@ -430,11 +435,20 @@
   <!-- Header -->
   <header id="header">
     <div class="logo">AgentComms <span>· theProductPath</span></div>
+
+    <!-- Instance Switcher -->
+    <div id="instance-area">
+      <select id="instance-select" title="Switch AgentComms instance"></select>
+      <button class="instance-action-btn" id="add-instance-btn" title="Add instance" onclick="openAddInstanceModal()">＋</button>
+      <button class="instance-action-btn danger" id="remove-instance-btn" title="Remove instance" onclick="removeCurrentInstance()" style="display:none">✕</button>
+      <div id="compat-warning" title="agentcomms-version missing">⚠ Compat</div>
+    </div>
+
     <div id="live-indicator">
       <div class="live-dot" id="live-dot"></div>
       <span id="live-text">Connecting…</span>
     </div>
-    <button id="stop-btn" title="Stop the dashboard server" class="header-btn stop-btn">⏹ Stop</button>
+    <button id="stop-btn" class="header-btn stop-btn" title="Stop the dashboard server">⏹ Stop</button>
   </header>
 
   <!-- Stats Bar -->
@@ -472,7 +486,7 @@
       <div id="agents-list"></div>
     </div>
 
-    <!-- Inbox Panel (slide-in) -->
+    <!-- Inbox Panel -->
     <div id="inbox-panel">
       <div class="panel-header">
         <div class="panel-title" id="inbox-panel-title">Inbox</div>
@@ -483,7 +497,6 @@
 
     <!-- Main -->
     <div id="main">
-      <!-- Main Toolbar -->
       <div id="main-toolbar">
         <div class="filter-pills">
           <button class="pill active" id="filter-active-threads" onclick="setThreadFilter('active')">Active</button>
@@ -566,64 +579,307 @@
   </div>
 </div>
 
+<!-- Add Instance modal -->
+<div id="add-instance-modal">
+  <div id="add-instance-inner">
+    <div class="modal-header">
+      <div class="modal-title">Add AgentComms Instance</div>
+      <button class="modal-close-btn" onclick="closeAddInstanceModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <div class="form-label">Folder Path</div>
+        <div class="form-row">
+          <input class="form-input" id="add-inst-path" type="text" placeholder="/path/to/your/AgentComms" />
+          <button class="btn-secondary" onclick="validateInstancePath()">Validate</button>
+        </div>
+      </div>
+      <div class="validate-result" id="validate-result"></div>
+      <div class="form-group">
+        <div class="form-label">Display Name</div>
+        <input class="form-input" id="add-inst-name" type="text" placeholder="My Team" />
+      </div>
+      <div class="form-group">
+        <div class="form-label">Key (short, no spaces)</div>
+        <input class="form-input" id="add-inst-key" type="text" placeholder="my-team" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeAddInstanceModal()">Cancel</button>
+      <button class="btn-primary" id="add-inst-submit" onclick="submitAddInstance()">Add Instance</button>
+    </div>
+  </div>
+</div>
+
 <script>
 'use strict';
 
 // ─── State ──────────────────────────────────────────────────────────────────
 let state         = { agents: [], threads: [], stats: { activeAgents: 0, inFlight: 0, threadsOpen: 0, archived: 0 } };
-let agentFilter   = 'active'; // 'active' | 'all'
-let threadFilter  = 'active'; // 'active' | 'all'
-let currentView   = 'list';   // 'list' | 'map'
+let instances     = [];   // fetched from /instances
+let currentInstance = null;  // { key, name, displayName, builtin, ... }
+let agentFilter   = 'active';
+let threadFilter  = 'active';
+let currentView   = 'list';
 let sortKey       = 'updated';
-let sortDir       = -1;       // -1 = desc, 1 = asc
+let sortDir       = -1;
 let selectedAgent = null;
 let selectedThread = null;
 let openFileCards  = new Set();
+let validatedPath  = null;  // stores last validated path for add-instance
 
-// ─── SSE Connection ─────────────────────────────────────────────────────────
+// ─── Instance Switcher ────────────────────────────────────────────────────────
+async function loadInstances() {
+  try {
+    const res = await fetch('/instances');
+    instances = await res.json();
+  } catch (e) {
+    instances = [];
+  }
+  renderInstanceSelect();
+}
+
+function renderInstanceSelect() {
+  const sel = document.getElementById('instance-select');
+  sel.innerHTML = instances.map(i =>
+    `<option value="${escStr(i.key)}">${escHtml(i.displayName || i.name)}</option>`
+  ).join('');
+
+  if (currentInstance) {
+    sel.value = currentInstance.key;
+  } else if (instances.length > 0) {
+    currentInstance = instances[0];
+    sel.value = currentInstance.key;
+  }
+
+  // Show/hide remove button
+  const removeBtn = document.getElementById('remove-instance-btn');
+  if (currentInstance && !currentInstance.builtin) {
+    removeBtn.style.display = '';
+  } else {
+    removeBtn.style.display = 'none';
+  }
+}
+
+document.getElementById('instance-select').addEventListener('change', async function() {
+  const key = this.value;
+  const inst = instances.find(i => i.key === key);
+  if (!inst) return;
+  currentInstance = inst;
+  renderInstanceSelect();
+  await switchInstance(key);
+});
+
+async function switchInstance(key) {
+  // Tell server to rewire watcher
+  try {
+    await fetch('/switch-instance', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key }),
+    });
+  } catch (_) {}
+
+  // Reconnect SSE to the new instance
+  reconnectSSE(key);
+
+  // Also fetch fresh data immediately
+  try {
+    const res  = await fetch(`/data?instance=${encodeURIComponent(key)}`);
+    const data = await res.json();
+    handleNewData(data);
+  } catch (_) {}
+
+  // Update compat warning
+  updateCompatWarning(inst => inst && inst.key === key ? inst : null);
+}
+
+function updateCompatWarning(instOrFinder) {
+  const inst = typeof instOrFinder === 'function'
+    ? instances.find(instOrFinder)
+    : instOrFinder;
+  const warn = document.getElementById('compat-warning');
+  if (inst && inst.mailbox === null && inst.exists) {
+    warn.style.display = '';
+    warn.title = 'agentcomms-version file missing — folder may not be a valid AgentComms instance';
+  } else {
+    warn.style.display = 'none';
+  }
+}
+
+// ─── Add / Remove Instance ────────────────────────────────────────────────────
+function openAddInstanceModal() {
+  document.getElementById('add-inst-path').value = '';
+  document.getElementById('add-inst-name').value = '';
+  document.getElementById('add-inst-key').value  = '';
+  const vr = document.getElementById('validate-result');
+  vr.className = 'validate-result';
+  vr.textContent = '';
+  validatedPath = null;
+  document.getElementById('add-instance-modal').classList.add('open');
+  document.getElementById('add-inst-path').focus();
+}
+
+function closeAddInstanceModal() {
+  document.getElementById('add-instance-modal').classList.remove('open');
+}
+
+async function validateInstancePath() {
+  const pathVal = document.getElementById('add-inst-path').value.trim();
+  if (!pathVal) return;
+  const vr = document.getElementById('validate-result');
+  vr.textContent = 'Checking…';
+  vr.className = 'validate-result show';
+  try {
+    const res  = await fetch('/instances/validate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: pathVal }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      validatedPath = data.resolvedPath || pathVal;
+      const msg = `✓ Valid AgentComms folder${data.agentCount !== undefined ? ` · ${data.agentCount} agent(s)` : ''}` +
+        (data.warning ? `\n⚠ ${data.warning}` : '');
+      vr.className = `validate-result show ${data.warning ? 'warn' : 'ok'}`;
+      vr.textContent = msg;
+      // Auto-fill name from path basename if empty
+      if (!document.getElementById('add-inst-name').value) {
+        document.getElementById('add-inst-name').value = pathVal.split('/').filter(Boolean).pop() || '';
+      }
+      if (!document.getElementById('add-inst-key').value) {
+        const slug = (pathVal.split('/').filter(Boolean).pop() || 'instance')
+          .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        document.getElementById('add-inst-key').value = slug;
+      }
+    } else {
+      validatedPath = null;
+      vr.className = 'validate-result show fail';
+      vr.textContent = `✗ ${data.error}`;
+    }
+  } catch (e) {
+    validatedPath = null;
+    vr.className = 'validate-result show fail';
+    vr.textContent = `Error: ${e.message}`;
+  }
+}
+
+async function submitAddInstance() {
+  const pathVal = document.getElementById('add-inst-path').value.trim();
+  const name    = document.getElementById('add-inst-name').value.trim();
+  const key     = document.getElementById('add-inst-key').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-');
+  if (!pathVal || !name || !key) {
+    alert('Path, name, and key are all required.');
+    return;
+  }
+  const vr = document.getElementById('validate-result');
+  try {
+    const res  = await fetch('/instances/add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key, name, path: validatedPath || pathVal }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      closeAddInstanceModal();
+      await loadInstances();
+      // Switch to new instance
+      const sel = document.getElementById('instance-select');
+      sel.value = key;
+      currentInstance = instances.find(i => i.key === key) || currentInstance;
+      renderInstanceSelect();
+      await switchInstance(key);
+    } else {
+      vr.className = 'validate-result show fail';
+      vr.textContent = `✗ ${data.error}`;
+    }
+  } catch (e) {
+    vr.className = 'validate-result show fail';
+    vr.textContent = `Error: ${e.message}`;
+  }
+}
+
+async function removeCurrentInstance() {
+  if (!currentInstance || currentInstance.builtin) return;
+  if (!confirm(`Remove instance "${currentInstance.displayName || currentInstance.name}"? It will be removed from the switcher only — no files will be deleted.`)) return;
+  try {
+    const res  = await fetch('/instances/remove', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: currentInstance.key }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      currentInstance = null;
+      await loadInstances();
+      if (instances.length > 0) {
+        currentInstance = instances[0];
+        renderInstanceSelect();
+        await switchInstance(instances[0].key);
+      }
+    } else {
+      alert(`Error: ${data.error}`);
+    }
+  } catch (e) {
+    alert(`Error: ${e.message}`);
+  }
+}
+
+// ─── SSE Connection ──────────────────────────────────────────────────────────
 let evtSource;
-function connectSSE() {
-  evtSource = new EventSource('/events');
+
+function connectSSE(instanceKey) {
+  const key = instanceKey || (currentInstance ? currentInstance.key : '');
+  const url = key ? `/events?instance=${encodeURIComponent(key)}` : '/events';
+  evtSource = new EventSource(url);
   evtSource.onopen = () => {
-    const dot  = document.getElementById('live-dot');
-    const text = document.getElementById('live-text');
-    dot.className  = 'live-dot connected';
-    text.textContent = 'Live';
+    setLiveStatus(true);
   };
   evtSource.onmessage = (e) => {
     try {
-      state = JSON.parse(e.data);
-      render();
+      const data = JSON.parse(e.data);
+      handleNewData(data);
     } catch (_) {}
   };
   evtSource.onerror = () => {
-    const dot  = document.getElementById('live-dot');
-    const text = document.getElementById('live-text');
-    dot.className  = 'live-dot disconnected';
-    text.textContent = 'Reconnecting…';
+    setLiveStatus(false);
     evtSource.close();
-    setTimeout(connectSSE, 3000);
+    setTimeout(() => connectSSE(instanceKey), 3000);
   };
 }
 
-// ─── Render Entry ────────────────────────────────────────────────────────────
+function reconnectSSE(instanceKey) {
+  if (evtSource) { try { evtSource.close(); } catch (_) {} }
+  connectSSE(instanceKey);
+}
+
+function setLiveStatus(connected) {
+  const dot  = document.getElementById('live-dot');
+  const text = document.getElementById('live-text');
+  dot.className = connected ? 'live-dot connected' : 'live-dot disconnected';
+  text.textContent = connected ? 'Live' : 'Reconnecting…';
+}
+
+// ─── Data Handling ────────────────────────────────────────────────────────────
 let isFirstRender = true;
 
-function render() {
-  // On first render, ensure inbox panel is closed so agents are visible
+function handleNewData(data) {
+  state = data;
   if (isFirstRender) {
     document.getElementById('inbox-panel').classList.remove('open');
-    document.getElementById('main').classList.remove('inbox-open');
     isFirstRender = false;
   }
-  
+  render();
+}
+
+// ─── Render ───────────────────────────────────────────────────────────────────
+function render() {
   renderStats();
   renderAgents();
   renderThreads();
   if (currentView === 'map') drawMap();
 }
 
-// ─── Stats ───────────────────────────────────────────────────────────────────
 function renderStats() {
   const s = state.stats;
   document.getElementById('stat-agents').textContent   = s.activeAgents;
@@ -645,10 +901,9 @@ function renderAgents() {
   let agents = state.agents.slice();
 
   if (agentFilter === 'active') {
-    agents = agents.filter(a => a.isActive || a.inboxCount > 0);
+    agents = agents.filter(a => a.isActive || a.inboxCount > 0 || a.ghost);
   }
 
-  // Sort: inbox-first, then lastMtime desc
   agents.sort((a, b) => {
     if (b.inboxCount !== a.inboxCount) return b.inboxCount - a.inboxCount;
     return b.lastMtime - a.lastMtime;
@@ -661,34 +916,39 @@ function renderAgents() {
 
   list.innerHTML = agents.map(a => {
     const hasInbox  = a.inboxCount > 0;
-    const isActive  = a.isActive;
-    const dotClass  = hasInbox ? 'inbox' : (isActive ? 'active' : '');
-    const cardClass = hasInbox ? 'has-inbox' : '';
-    const sel       = selectedAgent === a.name ? ' selected' : '';
+    const dotClass  = hasInbox ? 'inbox' : (a.isActive ? 'active' : '');
+    const cardClass = [
+      hasInbox    ? 'has-inbox' : '',
+      a.ghost     ? 'ghost'     : '',
+    ].filter(Boolean).join(' ');
+    const sel = selectedAgent === a.name ? ' selected' : '';
 
-    return `<div class="agent-card ${cardClass}${sel}" onclick="selectAgent('${a.name}')">
+    const badges = [
+      hasInbox         ? `<div class="tag inbox-tag">📬${a.inboxCount}</div>` : '',
+      a.processedCount > 0 ? `<div class="tag">✓${a.processedCount}</div>` : '',
+      a.unregistered   ? `<div class="tag warn-tag">⚠️ unregistered</div>` : '',
+      a.ghost          ? `<div class="tag ghost-tag">👻 ghost</div>` : '',
+    ].filter(Boolean).join('');
+
+    return `<div class="agent-card ${cardClass}${sel}" onclick="selectAgent('${escStr(a.name)}')">
       <div class="agent-top">
         <div class="agent-emoji-wrap">
           <span>${a.emoji}</span>
           ${hasInbox ? `<div class="inbox-badge">${a.inboxCount}</div>` : ''}
         </div>
-        <div class="agent-name">${a.name}</div>
+        <div class="agent-name">${escHtml(a.name)}</div>
         <div class="agent-dot ${dotClass}"></div>
       </div>
       <div class="agent-meta">
-        <div class="agent-time">${a.lastActive}</div>
-        ${hasInbox    ? `<div class="tag inbox-tag">📬${a.inboxCount}</div>` : ''}
-        ${a.processedCount > 0 ? `<div class="tag">✓${a.processedCount}</div>` : ''}
+        <div class="agent-time">${a.ghost ? 'no folder' : a.lastActive}</div>
+        ${badges}
       </div>
     </div>`;
   }).join('');
 }
 
 function selectAgent(name) {
-  if (selectedAgent === name) {
-    closeInboxPanel();
-    return;
-  }
+  if (selectedAgent === name) { closeInboxPanel(); return; }
   selectedAgent = name;
   renderAgents();
   openInboxPanel(name);
@@ -697,18 +957,17 @@ function selectAgent(name) {
 function openInboxPanel(name) {
   const agent = state.agents.find(a => a.name === name);
   if (!agent) return;
-
   document.getElementById('inbox-panel-title').textContent = `${agent.emoji} ${agent.name}`;
-
   const content = document.getElementById('inbox-panel-content');
   let html = '';
-
-  if (agent.inboxFiles.length > 0) {
+  if (agent.ghost) {
+    html = `<div style="padding:16px;color:var(--muted);font-size:12px;text-align:center;">👻 Ghost agent — listed in MEMBERS.md but no folder found</div>`;
+  } else if (agent.inboxFiles.length > 0) {
     html += `<div class="inbox-section-label">📬 Inbox — ${agent.inboxFiles.length} unread</div>`;
     html += agent.inboxFiles.map(f => `
       <div class="inbox-file-card unread" id="ifc-${encodeId(f.name)}" onclick="toggleInboxFile('${escStr(f.name)}', '${escStr(f.path)}')">
         <div class="inbox-file-header">
-          <div class="inbox-file-name">${f.name}</div>
+          <div class="inbox-file-name">${escHtml(f.name)}</div>
           <div class="inbox-file-hint">click to read →</div>
         </div>
         <div class="inbox-file-content" id="ifc-content-${encodeId(f.name)}"></div>
@@ -716,23 +975,19 @@ function openInboxPanel(name) {
   } else {
     html += `<div class="clear-inbox">✓ Inbox clear</div>`;
   }
-
-  if (agent.processedFiles.length > 0) {
+  if (!agent.ghost && agent.processedFiles.length > 0) {
     html += `<div class="inbox-section-label">✓ Processed (${agent.processedCount})</div>`;
     html += `<div class="processed-list">` +
-      agent.processedFiles.map(f => `<div class="processed-item">${f}</div>`).join('') +
+      agent.processedFiles.map(f => `<div class="processed-item">${escHtml(f)}</div>`).join('') +
       `</div>`;
   }
-
   content.innerHTML = html;
   document.getElementById('inbox-panel').classList.add('open');
-  document.getElementById('main').classList.add('inbox-open');
 }
 
 function closeInboxPanel() {
   selectedAgent = null;
   document.getElementById('inbox-panel').classList.remove('open');
-  document.getElementById('main').classList.remove('inbox-open');
   renderAgents();
 }
 
@@ -740,20 +995,16 @@ function toggleInboxFile(name, filePath) {
   const id      = encodeId(name);
   const content = document.getElementById(`ifc-content-${id}`);
   if (!content) return;
-
   if (content.classList.contains('visible')) {
     content.classList.remove('visible');
     openFileCards.delete(name);
     return;
   }
-
   openFileCards.add(name);
   content.classList.add('visible');
-  if (content.textContent.trim() === '') {
+  if (!content.textContent.trim()) {
     content.textContent = 'Loading…';
-    fetchFile(filePath).then(text => {
-      content.textContent = text;
-    });
+    fetchFile(filePath).then(text => { content.textContent = text; });
   }
 }
 
@@ -766,35 +1017,28 @@ function setThreadFilter(f) {
 }
 
 function sortBy(key) {
-  if (sortKey === key) {
-    sortDir = -sortDir;
-  } else {
-    sortKey = key;
-    sortDir = -1;
-  }
+  if (sortKey === key) { sortDir = -sortDir; }
+  else { sortKey = key; sortDir = -1; }
   renderThreads();
 }
 
 function renderThreads() {
   const tbody = document.getElementById('threads-tbody');
-
-  // Update sort arrows
   ['date','status','updated'].forEach(k => {
     const el = document.getElementById(`sort-${k}`);
     if (el) el.textContent = sortKey === k ? (sortDir === -1 ? '↓' : '↑') : '';
   });
 
   let threads = state.threads.slice();
-
   if (threadFilter === 'active') {
     threads = threads.filter(t => t.status !== 'done' && t.status !== 'archived' && t.zone !== 'archive');
   }
 
   threads.sort((a, b) => {
     let va, vb;
-    if (sortKey === 'date')    { va = a.date; vb = b.date; }
+    if (sortKey === 'date')   { va = a.date;      vb = b.date; }
     else if (sortKey === 'status') { va = a.status; vb = b.status; }
-    else                       { va = a.lastMtime; vb = b.lastMtime; }
+    else                      { va = a.lastMtime; vb = b.lastMtime; }
     if (va < vb) return sortDir;
     if (va > vb) return -sortDir;
     return 0;
@@ -806,14 +1050,13 @@ function renderThreads() {
   }
 
   tbody.innerHTML = threads.map(t => {
-    const sel    = selectedThread === t.slug ? ' selected' : '';
-    const agents = t.agents.map(a => `<div class="agent-chip">${a}</div>`).join('');
+    const sel      = selectedThread === t.slug ? ' selected' : '';
+    const agents   = t.agents.map(a => `<div class="agent-chip">${escHtml(a)}</div>`).join('');
     const readable = t.slug.replace(/^\d{4}-\d{2}-\d{2}_/, '').replace(/-/g, ' ');
-
     return `<tr class="thread-row${sel}" onclick="selectThread('${escStr(t.slug)}')">
       <td class="thread-name">
-        ${readable}
-        <span class="thread-slug">${t.slug}</span>
+        ${escHtml(readable)}
+        <span class="thread-slug">${escHtml(t.slug)}</span>
       </td>
       <td class="col-date">${t.date}</td>
       <td class="col-status"><span class="status-pill status-${t.status}">${t.status}</span></td>
@@ -832,11 +1075,8 @@ function selectThread(slug) {
 function openShelf(slug) {
   const thread = state.threads.find(t => t.slug === slug);
   if (!thread) return;
-
   const readable = slug.replace(/^\d{4}-\d{2}-\d{2}_/, '').replace(/-/g, ' ');
   document.getElementById('shelf-title').textContent = readable;
-
-  // Meta chips in header bar
   const zoneLabel = thread.zone === 'archive' ? '📦 archive' : '🗂 active';
   document.getElementById('shelf-meta').innerHTML =
     `<span class="status-pill status-${thread.status}">${thread.status}</span>` +
@@ -844,7 +1084,6 @@ function openShelf(slug) {
     `<span class="shelf-meta-item">· ${thread.lastActive}</span>` +
     `<span class="shelf-meta-item">· ${zoneLabel}</span>`;
 
-  // Files
   const fileList = document.getElementById('shelf-file-list');
   fileList.innerHTML = thread.files.map(f => {
     const ext  = f.name.split('.').pop().toLowerCase();
@@ -852,15 +1091,14 @@ function openShelf(slug) {
     const age  = f.mtime ? relativeTime(f.mtime) : '';
     return `<div class="shelf-file-item" id="sfi-${encodeId(f.name)}" onclick="viewShelfFile('${escStr(f.name)}', '${escStr(f.path)}')">
       <span class="shelf-file-icon">${icon}</span>
-      <span class="shelf-file-name">${f.name}</span>
+      <span class="shelf-file-name">${escHtml(f.name)}</span>
       ${age ? `<span class="shelf-file-age">${age}</span>` : ''}
     </div>`;
   }).join('');
 
-  // Agents
   const agentsEl = document.getElementById('shelf-agents-content');
   agentsEl.innerHTML = thread.agents.length > 0
-    ? thread.agents.map(a => `<div class="agent-chip">${a}</div>`).join('')
+    ? thread.agents.map(a => `<div class="agent-chip">${escHtml(a)}</div>`).join('')
     : '<span style="color:var(--muted);font-size:11px">None detected</span>';
 
   closeFileViewer();
@@ -876,23 +1114,14 @@ function toggleShelf() {
 }
 
 function viewShelfFile(name, filePath) {
-  // Toggle off if already active
   const el = document.getElementById(`sfi-${encodeId(name)}`);
-  if (el && el.classList.contains('active')) {
-    closeFileViewer();
-    return;
-  }
-  // Deactivate others
+  if (el && el.classList.contains('active')) { closeFileViewer(); return; }
   document.querySelectorAll('.shelf-file-item.active').forEach(e => e.classList.remove('active'));
   if (el) el.classList.add('active');
-
   document.getElementById('file-viewer-name').textContent = name;
   document.getElementById('file-viewer-body').textContent = 'Loading…';
   document.getElementById('file-expand-btn').style.visibility = 'visible';
-
-  fetchFile(filePath).then(text => {
-    document.getElementById('file-viewer-body').textContent = text;
-  });
+  fetchFile(filePath).then(text => { document.getElementById('file-viewer-body').textContent = text; });
 }
 
 function closeFileViewer() {
@@ -915,14 +1144,12 @@ function closeFileModal() {
   document.getElementById('file-modal').classList.remove('open');
 }
 
-// Close modal on backdrop click
 document.addEventListener('click', (e) => {
   if (e.target === document.getElementById('file-modal')) closeFileModal();
+  if (e.target === document.getElementById('add-instance-modal')) closeAddInstanceModal();
 });
-
-// Close modal on Escape
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') closeFileModal();
+  if (e.key === 'Escape') { closeFileModal(); closeAddInstanceModal(); }
 });
 
 // ─── View Toggle ─────────────────────────────────────────────────────────────
@@ -932,17 +1159,13 @@ function setView(v) {
   document.getElementById('btn-map').className  = 'view-btn' + (v === 'map'  ? ' active' : '');
   document.getElementById('threads-view').style.display = v === 'list' ? 'flex' : 'none';
   const mapEl = document.getElementById('map-view');
-  if (v === 'map') {
-    mapEl.classList.add('active');
-    drawMap();
-  } else {
-    mapEl.classList.remove('active');
-  }
+  if (v === 'map') { mapEl.classList.add('active'); drawMap(); }
+  else mapEl.classList.remove('active');
 }
 
 // ─── Activity Map ─────────────────────────────────────────────────────────────
-let mapNodes   = [];
-let mapAnim    = null;
+let mapNodes = [];
+let mapAnim  = null;
 
 function drawMap() {
   const container = document.getElementById('map-view');
@@ -951,37 +1174,29 @@ function drawMap() {
   const H = container.clientHeight || 500;
   canvas.width  = W;
   canvas.height = H;
-
-  const ctx    = canvas.getContext('2d');
-  const agents = state.agents;
-  const threads = state.threads;
+  const ctx = canvas.getContext('2d');
+  const agents  = (state.agents || []).filter(a => !a.ghost);
+  const threads = state.threads || [];
 
   if (agents.length === 0) {
     ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = '#7c8db0';
-    ctx.font = '14px system-ui';
-    ctx.textAlign = 'center';
+    ctx.fillStyle = '#7c8db0'; ctx.font = '14px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('No agents yet', W / 2, H / 2);
     return;
   }
 
-  // Build/update nodes
   const existing = {};
   mapNodes.forEach(n => { existing[n.name] = n; });
 
   mapNodes = agents.map((a, i) => {
     const angle = (2 * Math.PI * i / agents.length) - Math.PI / 2;
-    const r     = Math.min(W, H) * 0.32;
-    const cx    = W / 2;
-    const cy    = H / 2;
-    const tx    = cx + r * Math.cos(angle);
-    const ty    = cy + r * Math.sin(angle);
-    const prev  = existing[a.name];
+    const r  = Math.min(W, H) * 0.32;
+    const tx = W / 2 + r * Math.cos(angle);
+    const ty = H / 2 + r * Math.sin(angle);
+    const prev = existing[a.name];
     return {
-      name:   a.name,
-      emoji:  a.emoji,
-      inbox:  a.inboxCount > 0,
-      active: a.isActive,
+      name:   a.name, emoji: a.emoji,
+      inbox:  a.inboxCount > 0, active: a.isActive,
       x:  prev ? prev.x  + (tx - prev.x)  * 0.15 : tx,
       y:  prev ? prev.y  + (ty - prev.y)  * 0.15 : ty,
       tx, ty,
@@ -998,82 +1213,52 @@ function drawMap() {
     ctx.clearRect(0, 0, W, H);
     frame++;
 
-    // Draw edges
     threads.forEach(t => {
       if (t.agents.length < 2) return;
       const color = t.status === 'in-progress' ? '#f59e0b'
-                  : (t.status === 'done' || t.status === 'archived' || t.zone === 'archive') ? '#4b5563'
-                  : '#6366f1';
+        : (t.status === 'done' || t.status === 'archived' || t.zone === 'archive') ? '#4b5563'
+        : '#6366f1';
       for (let i = 0; i < t.agents.length; i++) {
         for (let j = i + 1; j < t.agents.length; j++) {
           const na = mapNodes.find(n => n.name === t.agents[i]);
           const nb = mapNodes.find(n => n.name === t.agents[j]);
           if (!na || !nb) continue;
-          ctx.beginPath();
-          ctx.moveTo(na.x, na.y);
-          ctx.lineTo(nb.x, nb.y);
-          ctx.strokeStyle = color;
-          ctx.lineWidth   = 1.5;
-          ctx.globalAlpha = 0.4;
-          ctx.stroke();
-          ctx.globalAlpha = 1;
+          ctx.beginPath(); ctx.moveTo(na.x, na.y); ctx.lineTo(nb.x, nb.y);
+          ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.4;
+          ctx.stroke(); ctx.globalAlpha = 1;
         }
       }
     });
 
-    // Draw nodes
     mapNodes.forEach(n => {
-      // Gentle float
-      n.x += n.vx;
-      n.y += n.vy;
-      n.vx += (n.tx - n.x) * 0.04;
-      n.vy += (n.ty - n.y) * 0.04;
-      n.vx *= 0.8;
-      n.vy *= 0.8;
+      n.x += n.vx; n.y += n.vy;
+      n.vx += (n.tx - n.x) * 0.04; n.vy += (n.ty - n.y) * 0.04;
+      n.vx *= 0.8; n.vy *= 0.8;
       n.x += (Math.sin(frame * 0.01 + n.tx) * 0.3);
       n.y += (Math.cos(frame * 0.013 + n.ty) * 0.3);
 
       const radius = n.inbox ? 24 : (n.active ? 20 : 16);
       const color  = n.inbox ? '#f59e0b' : (n.active ? '#22c55e' : '#6b7280');
 
-      // Pulse ring for inbox
       if (n.inbox) {
         const pulse = 0.4 + 0.4 * Math.sin(frame * 0.07);
-        ctx.beginPath();
-        ctx.arc(n.x, n.y, radius + 8, 0, Math.PI * 2);
-        ctx.strokeStyle = '#f59e0b';
-        ctx.lineWidth   = 2;
-        ctx.globalAlpha = pulse * 0.6;
-        ctx.stroke();
-        ctx.globalAlpha = 1;
+        ctx.beginPath(); ctx.arc(n.x, n.y, radius + 8, 0, Math.PI * 2);
+        ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 2; ctx.globalAlpha = pulse * 0.6;
+        ctx.stroke(); ctx.globalAlpha = 1;
       }
 
-      // Node circle
-      ctx.beginPath();
-      ctx.arc(n.x, n.y, radius, 0, Math.PI * 2);
-      ctx.fillStyle = color;
-      ctx.globalAlpha = 0.85;
-      ctx.fill();
-      ctx.globalAlpha = 1;
+      ctx.beginPath(); ctx.arc(n.x, n.y, radius, 0, Math.PI * 2);
+      ctx.fillStyle = color; ctx.globalAlpha = 0.85; ctx.fill(); ctx.globalAlpha = 1;
 
-      // Emoji
-      ctx.font = `${radius * 0.9}px serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = '#fff';
-      ctx.fillText(n.emoji, n.x, n.y);
+      ctx.font = `${radius * 0.9}px serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#fff'; ctx.fillText(n.emoji, n.x, n.y);
 
-      // Name label
-      ctx.font = '11px system-ui';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'top';
-      ctx.fillStyle = '#e2e8f0';
-      ctx.fillText(n.name, n.x, n.y + radius + 4);
+      ctx.font = '11px system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillStyle = '#e2e8f0'; ctx.fillText(n.name, n.x, n.y + radius + 4);
     });
 
     mapAnim = requestAnimationFrame(animate);
   }
-
   animate();
 }
 
@@ -1099,17 +1284,16 @@ function relativeTime(mtimeMs) {
 }
 
 function escStr(s) {
-  return s.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+  return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
 }
-function encodeId(s) {
-  return s.replace(/[^a-z0-9]/gi, '_');
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
+function encodeId(s) { return String(s).replace(/[^a-z0-9]/gi, '_'); }
 
-// ─── Stop Button Handler ──────────────────────────────────────────────────────
+// ─── Stop Button ─────────────────────────────────────────────────────────────
 document.getElementById('stop-btn').addEventListener('click', async () => {
-  const confirmed = confirm('Stop the AgentComms Dashboard server?');
-  if (!confirmed) return;
-  
+  if (!confirm('Stop the AgentComms Dashboard server?')) return;
   try {
     await fetch('/shutdown', { method: 'POST' });
     document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#0f1117;color:#e2e8f0;font-size:18px;text-align:center;"><div><h2>Server stopped.</h2><p>You can close this tab.</p></div></div>';
@@ -1118,23 +1302,21 @@ document.getElementById('stop-btn').addEventListener('click', async () => {
   }
 });
 
-// ─── Shorty Easter Egg 🥃 ──────────────────────────────────────────────────────
-// Hidden keystroke: '🥃' → press the Ctrl+Shift+S (or Cmd+Shift+S on Mac) to activate
-// Plus a console log for curious developers
+// ─── Shorty Easter Egg 🥃 ─────────────────────────────────────────────────────
 console.log('%c 🥃 Shorty was here %c', 'background:#78350f;color:#f59e0b;font-weight:bold;padding:4px 8px;border-radius:3px', 'color:#7c8db0;font-style:italic');
-
-let easterEggKeys = [];
 document.addEventListener('keydown', (e) => {
-  // Track Ctrl/Cmd + Shift + S
   if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.code === 'KeyS') {
     e.preventDefault();
-    const msg = `🥃 Shorty shipped v0.6\n\nThe reference implementation lives in ~/.openclaw/workspace/apps/agentcomms-dashboard/\n\nThis product is built for teams that talk in folders, not Slack.`;
-    alert(msg);
+    alert(`🥃 Shorty shipped v0.6\n\nThe reference implementation lives in ~/.openclaw/workspace/apps/agentcomms-dashboard/\n\nThis product is built for teams that talk in folders, not Slack.`);
   }
 });
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
-connectSSE();
+(async () => {
+  await loadInstances();
+  const key = currentInstance ? currentInstance.key : '';
+  connectSSE(key);
+})();
 </script>
 </body>
 </html>
