@@ -5,7 +5,7 @@
 # Usage: bash teardown.sh
 # Run from your AgentComms root folder, or pass --root /path/to/AgentComms
 
-set -euo pipefail
+set -eu
 
 # ─── Root resolution ─────────────────────────────────────────────────────────
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -56,10 +56,14 @@ MAILBOX_CREATED=""
 MAILBOX_VERSION=""
 
 if [[ -f "$MAILBOX_FILE" ]]; then
-  MAILBOX_ID="$(grep -m1 '^mailbox-id:' "$MAILBOX_FILE" | sed 's/^mailbox-id:[[:space:]]*//' | tr -d '[:space:]')"
-  MAILBOX_NAME="$(grep -m1 '^mailbox-name:' "$MAILBOX_FILE" | sed 's/^mailbox-name:[[:space:]]*//')"
-  MAILBOX_CREATED="$(grep -m1 '^created:' "$MAILBOX_FILE" | sed 's/^created:[[:space:]]*//' | tr -d '[:space:]')"
-  MAILBOX_VERSION="$(grep -m1 '^agentcomms-version:' "$MAILBOX_FILE" | sed 's/^agentcomms-version:[[:space:]]*//' | tr -d '[:space:]')"
+  MAILBOX_ID="$(grep -m1 '^mailbox-id:' "$MAILBOX_FILE" 2>/dev/null || true)"
+  MAILBOX_ID="$(echo "$MAILBOX_ID" | sed 's/^mailbox-id:[[:space:]]*//' | tr -d '[:space:]')"
+  MAILBOX_NAME="$(grep -m1 '^mailbox-name:' "$MAILBOX_FILE" 2>/dev/null || true)"
+  MAILBOX_NAME="$(echo "$MAILBOX_NAME" | sed 's/^mailbox-name:[[:space:]]*//')"
+  MAILBOX_CREATED="$(grep -m1 '^created:' "$MAILBOX_FILE" 2>/dev/null || true)"
+  MAILBOX_CREATED="$(echo "$MAILBOX_CREATED" | sed 's/^created:[[:space:]]*//' | tr -d '[:space:]')"
+  MAILBOX_VERSION="$(grep -m1 '^agentcomms-version:' "$MAILBOX_FILE" 2>/dev/null || true)"
+  MAILBOX_VERSION="$(echo "$MAILBOX_VERSION" | sed 's/^agentcomms-version:[[:space:]]*//' | tr -d '[:space:]')"
   echo "  Mailbox ID:   $MAILBOX_ID"
   echo "  Mailbox Name: $MAILBOX_NAME"
   [[ -n "$MAILBOX_CREATED" ]] && echo "  Created:      $MAILBOX_CREATED"
@@ -102,11 +106,12 @@ if [[ -d "$THREADS_DIR" ]]; then
     status_file="$thread_dir/status.md"
     status="open"
     if [[ -f "$status_file" ]]; then
-      raw_status="$(grep -i '^status:' "$status_file" | head -1 | sed 's/^status:[[:space:]]*//' | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')"
+      raw_status="$(grep -im1 '^status:' "$status_file" 2>/dev/null || true)"
+      raw_status="$(echo "$raw_status" | sed 's/^status:[[:space:]]*//' | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')"
       [[ -n "$raw_status" ]] && status="$raw_status"
     fi
     # Check if terminal
-    if echo "$status" | grep -qiE "^($TERMINAL_STATUSES)$"; then
+    if echo "$status" | grep -qiE "^($TERMINAL_STATUSES)$" 2>/dev/null; then
       continue
     fi
     OPEN_THREADS+=("$thread_name ($status)")
