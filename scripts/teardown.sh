@@ -128,11 +128,13 @@ else
 fi
 
 # ─── Confirmation ─────────────────────────────────────────────────────────────
-printf "  Close mailbox \"$MAILBOX_NAME\" ($MAILBOX_ID)? This cannot be undone. [y/N] "
-read -r REPLY
+printf "  Close mailbox \"%s\" (%s)? This cannot be undone. [y/N] " "$MAILBOX_NAME" "$MAILBOX_ID"
+REPLY=""
+read -r REPLY </dev/tty 2>/dev/null || true
+echo ""
 if [[ "$REPLY" != "y" && "$REPLY" != "Y" ]]; then
-  echo ""
   echo "  Aborted. Mailbox not closed."
+  echo ""
   exit 0
 fi
 echo ""
