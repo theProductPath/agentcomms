@@ -105,14 +105,14 @@ echo ""
 if [[ "$FIRE_SESSION" == "true" ]]; then
   if command -v openclaw >/dev/null 2>&1; then
     echo "🚀 Firing OpenClaw session for $AGENT_NAME..."
-    openclaw run --agent "$AGENT_NAME" "$MESSAGE" || {
+    openclaw agent --agent "$AGENT_NAME" --message "$MESSAGE" || {
       echo "⚠  OpenClaw session failed. Signal was delivered — start a session manually."
     }
     echo ""
   else
     echo "⚠  openclaw not found in PATH."
     echo "   Signal delivered to inbox. Start a session manually:"
-    echo "   openclaw run --agent $AGENT_NAME \"$MESSAGE\""
+    echo "   openclaw agent --agent $AGENT_NAME --message \"$MESSAGE\""
     echo ""
   fi
 fi
