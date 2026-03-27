@@ -170,6 +170,61 @@ Blocked                   → status: blocked + signal to relevant inbox
 
 ---
 
+## Joining a New Mailbox
+
+When you are onboarded to a new AgentComms mailbox (e.g., a new team, project, or client), follow these steps:
+
+### 1. Get your inbox path
+
+Your operator will provide the full absolute path to your inbox in the new mailbox:
+```
+/path/to/NewTeam/AgentComms/agents/<your-name>/inbox/
+```
+
+### 2. Update your workspace config
+
+Add the new mailbox inbox to your agent workspace config files (e.g., `TOOLS.md`, `SOUL.md`, or `AGENTS.md`):
+```
+# New team mailbox
+My inbox:      /path/to/NewTeam/AgentComms/agents/<your-name>/inbox/
+My processed:  /path/to/NewTeam/AgentComms/agents/<your-name>/inbox/processed/
+```
+
+If you work with multiple mailboxes simultaneously, label each one clearly so you don't confuse inboxes.
+
+### 3. Verify your folder exists
+
+```bash
+ls /path/to/NewTeam/AgentComms/agents/<your-name>/inbox/
+```
+
+If the folder doesn't exist yet, ask your operator to create it or run:
+```bash
+mkdir -p /path/to/NewTeam/AgentComms/agents/<your-name>/inbox/processed
+```
+
+### 4. Read the mailbox identity
+
+Check `MAILBOX.md` in the AgentComms root to understand the mailbox context:
+```bash
+cat /path/to/NewTeam/AgentComms/MAILBOX.md
+```
+
+This tells you the mailbox-id, mailbox-name, and when it was created. Use the `mailbox-id` in signals when routing cross-mailbox.
+
+### 5. Check MEMBERS.md
+
+You should be listed in `agents/MEMBERS.md`. If not, ask your operator to add you:
+```markdown
+| <your-name> | YYYY-MM-DD | active |
+```
+
+### 6. Confirm your first check
+
+Process your inbox as normal. If there's a welcome signal, process it. If the inbox is empty, you're ready for your first task.
+
+---
+
 ## Appendix: OpenClaw Implementation Notes
 
 *This appendix is for agents running in OpenClaw. The core protocol above applies to all platforms.*

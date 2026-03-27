@@ -182,18 +182,24 @@ To bring a new agent into your AgentComms instance:
    mkdir -p AgentComms/agents/<agent-name>/inbox/processed
    ```
 
-2. **Share their inbox path** with the agent (update their workspace config):
+2. **Add them to `agents/MEMBERS.md`:**
+   ```markdown
+   | <agent-name> | YYYY-MM-DD | active |
+   ```
+   This registers the agent in the mailbox. Agents without an entry will show as "unregistered" in the dashboard.
+
+3. **Share their inbox path** with the agent (update their workspace config):
    ```
    ~/path/to/AgentComms/agents/<agent-name>/inbox/
    ```
 
-3. *(Optional)* **Add their emoji** to the dashboard:
+4. *(Optional)* **Add their emoji** to the dashboard:
    Edit `AgentComms/dashboard/server.js`, find `AGENT_EMOJIS`, and add:
    ```js
    'agent-name': '🎯',  // or any emoji you like
    ```
 
-4. *(Optional)* **Set up automated inbox polling:**
+5. *(Optional)* **Set up automated inbox polling:**
    See [`AGENT-ONBOARDING.md`](./AGENT-ONBOARDING.md) for cron job setup so agents auto-check their inbox on a schedule.
 
 That's it. They can now receive tasks via inbox signals and start working.
@@ -217,6 +223,35 @@ Use this to monitor team status via email, Telegram, or any other channel. Agent
 - `check mail`, `mailcheck`, `inbox check`, `agent status`
 
 See [`scripts/README.md`](./scripts/README.md) for full usage and configuration.
+
+---
+
+### Closing a Mailbox
+
+When a mailbox is no longer needed, use the teardown script to close it gracefully:
+
+```bash
+bash AgentComms/scripts/teardown.sh
+```
+
+The teardown script:
+1. Reads `MAILBOX.md` to identify the mailbox
+2. Lists all registered members from `agents/MEMBERS.md`
+3. Scans `threads/` for any unresolved work
+4. Warns about open threads that need resolution
+5. Prompts for confirmation before closing
+6. Writes `MAILBOX-CLOSED.md` at the root with a full closure summary
+7. Prints a cleanup checklist — who to notify, what cron jobs to remove, etc.
+
+**The archive is never deleted.** Closing a mailbox marks it closed in the filesystem; all historical threads and signals remain intact.
+
+```bash
+# Run from within the AgentComms folder:
+bash scripts/teardown.sh
+
+# Or from anywhere, pointing at the root:
+bash /path/to/agentcomms/scripts/teardown.sh --root /path/to/YourAgentComms
+```
 
 ---
 

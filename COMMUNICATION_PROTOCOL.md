@@ -65,6 +65,7 @@ Agent inboxes carry **routing signals only** — small files that say "there's w
 Thread: threads/YYYY-MM-DD_task-slug/
 From: sender-agent
 Priority: normal | high | urgent
+Mailbox: <mailbox-id>  (optional — include when sending cross-mailbox signals)
 ```
 
 **What signals are not:**
