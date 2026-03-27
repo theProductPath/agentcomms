@@ -23,17 +23,17 @@ Agents check their inbox, read the signal, open the thread, do the work, write t
 **The repo is the installer, not the destination.** `setup.sh` creates your AgentComms instance in a new folder of your choosing. All files — dashboard, examples, and protocols — live in that new folder, not in the repo you cloned. Note the path to your install folder — you'll reference it in steps 3 and 4.
 
 ```bash
-# 1. Clone the repo — this is the installer only
-git clone https://github.com/theProductPath/agentcomms.git
+# 1. Clone the repo — this is the installer, not the destination
+#    Note where you cloned it — you'll reference this path in step 3
+git clone https://github.com/theProductPath/agentcomms.git ~/agentcomms-installer
 
 # 2. Go to the folder where you want your AgentComms to live
-#    (note this path — you'll use it in steps 3 and 4)
 cd ~/Documents   # or ~/my-team or wherever you prefer
 
-# 3. Run setup, pointing to the cloned repo
-bash ~/path/to/agentcomms/setup.sh
+# 3. Run setup from there, pointing at the cloned installer
+bash ~/agentcomms-installer/setup.sh
 
-# 4. Start the dashboard
+# 4. Start the dashboard from your new AgentComms folder
 bash AgentComms/dashboard/start.sh
 # → Dashboard opens at http://localhost:7843
 ```
