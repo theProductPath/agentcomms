@@ -384,6 +384,7 @@ echo "    scripts/                     Operator tools"
 echo ""
 echo "  Operator Tools:"
 echo "    bash $TARGET/scripts/inbox-snapshot.sh   — inbox status report"
+echo "    bash $TARGET/scripts/wake.sh <agent>      — wake an agent manually"
 if [[ -f "$TARGET/scripts/teardown.sh" ]]; then
 echo "    bash $TARGET/scripts/teardown.sh          — close this mailbox"
 fi

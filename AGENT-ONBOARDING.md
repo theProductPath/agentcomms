@@ -300,3 +300,29 @@ Your SOUL.md or TOOLS.md will contain:
 - Your team lead / routing targets (who to signal when you need a decision)
 
 When onboarded to a new team, update these files with the new AgentComms paths before processing any signals.
+
+---
+
+## Wake Signals
+
+Operators can activate you without a chat channel by running:
+
+```bash
+bash AgentComms/scripts/wake.sh <your-agent-name> "Check your inbox and process any pending signals."
+```
+
+This delivers a `wake.md` signal to your inbox and fires an OpenClaw session automatically. **Process wake signals the same way as any other inbox signal** — oldest first, move to `processed/` when done.
+
+Wake signals follow this format:
+
+```markdown
+# Wake Signal
+
+From: operator
+Sent: YYYY-MM-DD HH:MM
+Mailbox: <mailbox-id>
+
+<message from operator>
+```
+
+If you receive a wake signal with no prior context, treat it as a prompt to check your inbox for any unprocessed signals and begin work on the oldest pending task.

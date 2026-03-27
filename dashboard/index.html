@@ -173,6 +173,7 @@
     padding: 1px 4px; border-radius: 100px; line-height: 1.4;
   }
   .agent-name { font-weight: 600; font-size: 13px; flex: 1; }
+  .agent-mailbox { font-weight: 400; font-size: 10px; color: var(--muted); margin-left: 4px; }
   .agent-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gray); flex-shrink: 0; }
   .agent-dot.active { background: var(--green); }
   @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.3} }
@@ -602,12 +603,12 @@
       </div>
       <div class="validate-result" id="validate-result"></div>
       <div class="form-group">
-        <div class="form-label">Display Name</div>
-        <input class="form-input" id="add-inst-name" type="text" placeholder="My Team" oninput="onAddInstFieldChange()" />
+        <div class="form-label">Mailbox Name <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(shown in dropdown)</span></div>
+        <input class="form-input" id="add-inst-name" type="text" placeholder="tPP Main" oninput="onAddInstFieldChange()" />
       </div>
       <div class="form-group">
-        <div class="form-label">Key (short, no spaces)</div>
-        <input class="form-input" id="add-inst-key" type="text" placeholder="my-team" oninput="onAddInstFieldChange()" />
+        <div class="form-label">Mailbox ID <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(short slug, no spaces)</span></div>
+        <input class="form-input" id="add-inst-key" type="text" placeholder="tpp-main" oninput="onAddInstFieldChange()" />
       </div>
     </div>
     <div class="modal-footer">
@@ -725,6 +726,7 @@ function openAddInstanceModal() {
   validatedPath = null;
   document.getElementById('add-instance-modal').classList.add('open');
   document.getElementById('add-inst-path').focus();
+  // Note: name/key fields are intentionally left blank so validate can auto-fill from MAILBOX.md
 }
 
 function closeAddInstanceModal() {
@@ -782,17 +784,23 @@ async function validateInstancePath() {
     const data = await res.json();
     if (data.ok) {
       validatedPath = data.resolvedPath || pathVal;
-      const msg = `✓ Valid AgentComms folder${data.agentCount !== undefined ? ` · ${data.agentCount} agent(s)` : ''}` +
+      const mailbox = data.mailbox || null;
+      const mailboxTag = mailbox ? ` · 📬 ${mailbox.mailboxId}` : '';
+      const msg = `✓ Valid AgentComms folder${data.agentCount !== undefined ? ` · ${data.agentCount} agent(s)` : ''}${mailboxTag}` +
         (data.warning ? `\n⚠ ${data.warning}` : '');
       vr.className = `validate-result show ${data.warning ? 'warn' : 'ok'}`;
       vr.textContent = msg;
-      // Auto-fill name/key from path basename if empty
+      // Auto-fill name/key from MAILBOX.md if available, otherwise fall back to folder basename
       if (!document.getElementById('add-inst-name').value) {
-        document.getElementById('add-inst-name').value = pathVal.split('/').filter(Boolean).pop() || '';
+        document.getElementById('add-inst-name').value =
+          (mailbox && mailbox.mailboxName) ? mailbox.mailboxName :
+          (pathVal.split('/').filter(Boolean).pop() || '');
       }
       if (!document.getElementById('add-inst-key').value) {
-        const slug = (pathVal.split('/').filter(Boolean).pop() || 'instance')
-          .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        const slug = mailbox && mailbox.mailboxId
+          ? mailbox.mailboxId
+          : (pathVal.split('/').filter(Boolean).pop() || 'instance')
+              .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
         document.getElementById('add-inst-key').value = slug;
       }
       updateAddSubmitBtn();
@@ -810,11 +818,12 @@ async function validateInstancePath() {
 }
 
 async function submitAddInstance() {
-  const pathVal = document.getElementById('add-inst-path').value.trim();
-  const name    = document.getElementById('add-inst-name').value.trim();
-  const key     = document.getElementById('add-inst-key').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-');
+  const pathVal   = document.getElementById('add-inst-path').value.trim();
+  const name      = document.getElementById('add-inst-name').value.trim();
+  const key       = document.getElementById('add-inst-key').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-');
+  const mailboxId = key; // key IS the mailbox-id in the v0.7 model
   if (!pathVal || !name || !key) {
-    alert('Path, name, and key are all required.');
+    alert('Path, mailbox name, and mailbox ID are all required.');
     return;
   }
   const vr = document.getElementById('validate-result');
@@ -822,7 +831,7 @@ async function submitAddInstance() {
     const res  = await fetch('/instances/add', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key, name, path: validatedPath || pathVal }),
+      body: JSON.stringify({ key, name, path: validatedPath || pathVal, mailboxId }),
     });
     const data = await res.json();
     if (data.ok) {
@@ -997,7 +1006,7 @@ function renderAgents() {
           <span>${a.emoji}</span>
           ${hasInbox ? `<div class="inbox-badge">${a.inboxCount}</div>` : ''}
         </div>
-        <div class="agent-name">${escHtml(a.name)}</div>
+        <div class="agent-name">${escHtml(a.name)}${state.mailbox && state.mailbox.mailboxId ? `<span class="agent-mailbox"> @ ${escHtml(state.mailbox.mailboxId)}</span>` : ''}</div>
         <div class="agent-dot ${dotClass}"></div>
       </div>
       <div class="agent-meta">
@@ -1368,7 +1377,7 @@ console.log('%c 🥃 Shorty was here %c', 'background:#78350f;color:#f59e0b;font
 document.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.code === 'KeyS') {
     e.preventDefault();
-    alert(`🥃 Shorty shipped v0.6\n\nThe reference implementation lives in ~/.openclaw/workspace/apps/agentcomms-dashboard/\n\nThis product is built for teams that talk in folders, not Slack.`);
+    alert(`🥃 Shorty shipped v0.7\n\nThe reference implementation lives in ~/.openclaw/workspace/apps/agentcomms-dashboard/\n\nThis product is built for teams that talk in folders, not Slack.`);
   }
 });
 

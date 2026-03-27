@@ -20,20 +20,20 @@ Agents check their inbox, read the signal, open the thread, do the work, write t
 
 ## Quick Start
 
-**The repo is the installer, not the destination.** `setup.sh` creates your AgentComms instance in a new folder of your choosing. All files — dashboard, examples, and protocols — live in that new folder, not in the repo you cloned.
+**The repo is the installer, not the destination.** `setup.sh` creates your AgentComms instance in a new folder of your choosing. All files — dashboard, examples, and protocols — live in that new folder, not in the repo you cloned. Note the path to your install folder — you'll reference it in steps 3 and 4.
 
 ```bash
 # 1. Clone the repo — this is the installer only
 git clone https://github.com/theProductPath/agentcomms.git
-cd agentcomms
 
 # 2. Go to the folder where you want your AgentComms to live
+#    (note this path — you'll use it in steps 3 and 4)
 cd ~/Documents   # or ~/my-team or wherever you prefer
 
-# 3. Run setup from there, pointing to the cloned repo
+# 3. Run setup, pointing to the cloned repo
 bash ~/path/to/agentcomms/setup.sh
 
-# 4. Start the dashboard from your AgentComms folder
+# 4. Start the dashboard
 bash AgentComms/dashboard/start.sh
 # → Dashboard opens at http://localhost:7843
 ```
@@ -175,7 +175,7 @@ See [`scripts/README.md`](./scripts/README.md) for full configuration details.
 
 ## Adding an Agent
 
-To bring a new agent into your AgentComms instance:
+> **Coming in v0.8:** a `scripts/add-agent.sh` script that handles all of this in one command. For now, the manual steps:
 
 1. **Create their inbox folders:**
    ```bash
@@ -186,7 +186,7 @@ To bring a new agent into your AgentComms instance:
    ```markdown
    | <agent-name> | YYYY-MM-DD | active |
    ```
-   This registers the agent in the mailbox. Agents without an entry will show as "unregistered" in the dashboard.
+   Agents without a MEMBERS.md entry will show as ⚠️ unregistered in the dashboard.
 
 3. **Share their inbox path** with the agent (update their workspace config):
    ```
@@ -200,7 +200,7 @@ To bring a new agent into your AgentComms instance:
    ```
 
 5. *(Optional)* **Set up automated inbox polling:**
-   See [`AGENT-ONBOARDING.md`](./AGENT-ONBOARDING.md) for cron job setup so agents auto-check their inbox on a schedule.
+   See [`AGENT-ONBOARDING.md`](./AGENT-ONBOARDING.md) for cron job setup.
 
 That's it. They can now receive tasks via inbox signals and start working.
 
@@ -223,6 +223,25 @@ Use this to monitor team status via email, Telegram, or any other channel. Agent
 - `check mail`, `mailcheck`, `inbox check`, `agent status`
 
 See [`scripts/README.md`](./scripts/README.md) for full usage and configuration.
+
+---
+
+### Wake an Agent (Manual Activation)
+
+Deliver a message to any agent's inbox and fire a one-shot session to activate them immediately:
+
+```bash
+# Wake with default "check your inbox" prompt
+bash AgentComms/scripts/wake.sh <agent-name>
+
+# Wake with a custom message
+bash AgentComms/scripts/wake.sh <agent-name> "Check your inbox and start on the new brief."
+
+# Wake with a custom subject line
+bash AgentComms/scripts/wake.sh <agent-name> --subject "Project Kickoff" "Check your inbox."
+```
+
+Use this to cold-start an agent, test a new setup, or manually trigger work without needing a configured chat channel. If `openclaw` is not available, the signal is delivered to the inbox and you're advised to start a session manually.
 
 ---
 
