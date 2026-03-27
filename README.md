@@ -24,14 +24,15 @@ Agents check their inbox, read the signal, open the thread, do the work, write t
 
 ```bash
 # 1. Clone the repo — this is the installer, not the destination
-#    Note where you cloned it — you'll reference this path in step 3
-git clone https://github.com/theProductPath/agentcomms.git ~/agentcomms-installer
+git clone https://github.com/theProductPath/agentcomms.git
+# Or clone to a specific directory and note that path — you'll need it in step 3:
+# git clone https://github.com/theProductPath/agentcomms.git ~/agentcomms-installer
 
 # 2. Go to the folder where you want your AgentComms to live
 cd ~/Documents   # or ~/my-team or wherever you prefer
 
-# 3. Run setup from there, pointing at the cloned installer
-bash ~/agentcomms-installer/setup.sh
+# 3. Run setup, pointing at the cloned installer
+bash ~/agentcomms-installer/setup.sh   # adjust path to match where you cloned in step 1
 
 # 4. Start the dashboard from your new AgentComms folder
 bash AgentComms/dashboard/start.sh
