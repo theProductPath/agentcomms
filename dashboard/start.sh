@@ -73,9 +73,9 @@ if ! kill -0 "$SERVER_PID" 2>/dev/null; then
   exit 1
 fi
 
-echo "✓ Dashboard started (PID $SERVER_PID)"
-echo "  → http://localhost:$PORT"
-echo "  → Use dashboard 'Stop' button or: kill $SERVER_PID"
+echo "AgentComms Dashboard started in the background (PID $SERVER_PID)"
+echo "→ http://localhost:$PORT"
+echo "Stop it: click \"Stop Server\" in the dashboard, or run: kill $SERVER_PID"
 echo ""
 
 # ─── Auto-open browser ───────────────────────────────────────────────────────
@@ -100,13 +100,6 @@ if [[ "$AUTO_OPEN" == "true" ]]; then
   fi
 fi
 
-# ─── Keep script running while server runs ───────────────────────────────────
-# When user closes dashboard or kills the script, clean up
-trap "kill $SERVER_PID 2>/dev/null; exit 0" SIGINT SIGTERM
-
-# Wait for server to exit (blocks until server stops)
-wait $SERVER_PID 2>/dev/null || true
-
-echo ""
-echo "AgentComms Dashboard stopped."
-echo ""
+# Script exits here, returning the terminal to the user.
+# The server continues running in the background.
+# Use the Stop button in the dashboard UI or: kill $SERVER_PID

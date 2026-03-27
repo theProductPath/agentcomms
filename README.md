@@ -114,6 +114,8 @@ bash AgentComms/dashboard/start.sh --port 8080
 
 The dashboard starts at `http://localhost:7843` by default. A **Stop** button in the header lets you shut down the server cleanly.
 
+> **Note:** `start.sh` runs the server in the background and returns your terminal. Use the ⏹ Stop Server button in the dashboard UI, or kill the PID shown at startup. Do not run `node dashboard/server.js` directly unless you want to tie up a terminal window.
+
 **What it shows:**
 - **Stats bar** — agents active, messages in flight, threads open, archived count
 - **Agents panel** — one card per agent, with inbox count and last activity; agents with unread messages are highlighted in amber

@@ -20,19 +20,13 @@ bash dashboard/start.sh --port 8080
 
 Opens at: [http://localhost:7843](http://localhost:7843) (default)
 
-**Or, start the server directly:**
-```bash
-node dashboard/server.js
-# or with custom port
-node dashboard/server.js 8080
-# or with env var
-AGENTCOMMS_PORT=8080 node dashboard/server.js
-```
+> **Note:** `start.sh` runs the server in the background and returns your terminal. Use the ⏹ Stop Server button in the dashboard UI, or kill the PID shown at startup. Do not run `node dashboard/server.js` directly unless you want to tie up a terminal window.
 
 **Console output on start:**
 ```
-AgentComms Dashboard: http://localhost:7843
-Watching: /path/to/AgentComms
+AgentComms Dashboard started in the background (PID 12345)
+→ http://localhost:7843
+Stop it: click "Stop Server" in the dashboard, or run: kill 12345
 ```
 
 ---
@@ -77,7 +71,7 @@ const DEFAULT_PORT = 7843;
 
 **To point the dashboard at a different AgentComms folder:**
 ```bash
-AGENTCOMMS_PATH="/path/to/your/AgentComms" node dashboard/server.js
+AGENTCOMMS_PATH="/path/to/your/AgentComms" bash dashboard/start.sh
 ```
 
 ---
