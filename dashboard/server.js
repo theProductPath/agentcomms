@@ -260,6 +260,9 @@ function scanAgentComms(instancePath) {
   const now     = Date.now();
   const sevenDays = 7 * 24 * 60 * 60 * 1000;
 
+  // ── Parse mailbox identity ──
+  const mailboxInfo = parseMailbox(root) || {};
+
   // ── Parse members (for ghost/unregistered detection) ──
   const membersData = parseMembers(root);
   const memberNames = membersData ? new Set(membersData.map(m => m.agent.toLowerCase())) : null;
@@ -381,7 +384,17 @@ function scanAgentComms(instancePath) {
     t.zone === 'archive' || t.status === 'done'
   ).length;
 
-  return { agents, threads, stats: { activeAgents, inFlight, threadsOpen, archived } };
+  // ── Mailbox closed check ──
+  const closedFile  = path.join(instancePath, 'MAILBOX-CLOSED.md');
+  const mailboxClosed = safeStat(closedFile) ? true : false;
+  let closedInfo = null;
+  if (mailboxClosed) {
+    const content = safeReadFile(closedFile);
+    const closedDate = (content && content.match(/^closed:\s*(.+)/im)) ? content.match(/^closed:\s*(.+)/im)[1].trim() : '';
+    closedInfo = { closed: true, closedDate };
+  }
+
+  return { agents, threads, stats: { activeAgents, inFlight, threadsOpen, archived }, mailbox: { ...mailboxInfo, ...closedInfo } };
 }
 
 // ─── SSE Clients ──────────────────────────────────────────────────────────────
@@ -525,9 +538,7 @@ function handleRequest(req, res) {
     sseClients.add(client);
 
     try {
-      const mailbox  = parseMailbox(instancePath);
       const data     = scanAgentComms(instancePath);
-      data.mailbox   = mailbox;
       res.write(`data: ${JSON.stringify(data)}\n\n`);
     } catch (err) {
       console.error('Initial SSE error:', err.message);
@@ -543,9 +554,7 @@ function handleRequest(req, res) {
     const inst         = instanceByKey(instanceKey);
     const instancePath = inst ? inst.path : AGENTCOMMS_DEFAULT;
     try {
-      const mailbox    = parseMailbox(instancePath);
       const data       = scanAgentComms(instancePath);
-      data.mailbox     = mailbox;
       data.instanceKey = instanceKey;
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
       res.end(JSON.stringify(data));
@@ -661,9 +670,7 @@ function handleRequest(req, res) {
 
       // Notify all SSE clients watching this instance to refresh
       try {
-        const mailbox  = parseMailbox(inst.path);
         const data     = scanAgentComms(inst.path);
-        data.mailbox   = mailbox;
         data.instanceKey = key;
         const msg = `data: ${JSON.stringify(data)}\n\n`;
         for (const client of sseClients) {

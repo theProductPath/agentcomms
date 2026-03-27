@@ -396,6 +396,8 @@
     background: var(--indigo); color: #fff; border: none;
   }
   .btn-primary:hover { background: #5254cc; }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+  .folder-browse-btn { cursor: pointer; padding: 7px 10px; flex-shrink: 0; }
   .btn-secondary {
     padding: 7px 16px; border-radius: 5px; font-size: 13px; font-weight: 500;
     background: transparent; color: var(--muted); border: 1px solid var(--border);
@@ -590,23 +592,27 @@
       <div class="form-group">
         <div class="form-label">Folder Path</div>
         <div class="form-row">
-          <input class="form-input" id="add-inst-path" type="text" placeholder="/path/to/your/AgentComms" />
-          <button class="btn-secondary" onclick="validateInstancePath()">Validate</button>
+          <input class="form-input" id="add-inst-path" type="text" placeholder="/path/to/your/AgentComms" oninput="onAddInstFieldChange()" />
+          <label class="btn-secondary folder-browse-btn" title="Browse for folder">
+            📁
+            <input type="file" id="add-inst-browse" webkitdirectory style="display:none" onchange="onFolderBrowse(this)" />
+          </label>
+          <button class="btn-secondary" id="validate-btn" onclick="validateInstancePath()">Validate</button>
         </div>
       </div>
       <div class="validate-result" id="validate-result"></div>
       <div class="form-group">
         <div class="form-label">Display Name</div>
-        <input class="form-input" id="add-inst-name" type="text" placeholder="My Team" />
+        <input class="form-input" id="add-inst-name" type="text" placeholder="My Team" oninput="onAddInstFieldChange()" />
       </div>
       <div class="form-group">
         <div class="form-label">Key (short, no spaces)</div>
-        <input class="form-input" id="add-inst-key" type="text" placeholder="my-team" />
+        <input class="form-input" id="add-inst-key" type="text" placeholder="my-team" oninput="onAddInstFieldChange()" />
       </div>
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeAddInstanceModal()">Cancel</button>
-      <button class="btn-primary" id="add-inst-submit" onclick="submitAddInstance()">Add Instance</button>
+      <button class="btn-primary" id="add-inst-submit" onclick="submitAddInstance()" disabled>Add Instance</button>
     </div>
   </div>
 </div>
@@ -712,6 +718,7 @@ function openAddInstanceModal() {
   document.getElementById('add-inst-path').value = '';
   document.getElementById('add-inst-name').value = '';
   document.getElementById('add-inst-key').value  = '';
+  document.getElementById('add-inst-submit').disabled = true;
   const vr = document.getElementById('validate-result');
   vr.className = 'validate-result';
   vr.textContent = '';
@@ -722,6 +729,42 @@ function openAddInstanceModal() {
 
 function closeAddInstanceModal() {
   document.getElementById('add-instance-modal').classList.remove('open');
+}
+
+function onFolderBrowse(input) {
+  // Extract the folder path from the selected files
+  if (!input.files || input.files.length === 0) return;
+  const firstFile = input.files[0];
+  // webkitRelativePath gives "FolderName/file.ext" — strip the filename
+  const relPath = firstFile.webkitRelativePath || '';
+  const folder  = relPath.split('/')[0];
+  // Build the full path using the file's path minus the relative tail
+  let fullPath = firstFile.path || '';
+  if (fullPath) {
+    // Node/Electron-style: file.path is absolute
+    const suffix = firstFile.webkitRelativePath;
+    fullPath = fullPath.slice(0, fullPath.length - suffix.length - 1);
+  } else {
+    // Fallback: just show the folder name
+    fullPath = folder;
+  }
+  document.getElementById('add-inst-path').value = fullPath;
+  // Reset validation and auto-validate
+  validatedPath = null;
+  updateAddSubmitBtn();
+  validateInstancePath();
+}
+
+function onAddInstFieldChange() {
+  updateAddSubmitBtn();
+}
+
+function updateAddSubmitBtn() {
+  const path = document.getElementById('add-inst-path').value.trim();
+  const name = document.getElementById('add-inst-name').value.trim();
+  const key  = document.getElementById('add-inst-key').value.trim();
+  const ready = validatedPath && name && key;
+  document.getElementById('add-inst-submit').disabled = !ready;
 }
 
 async function validateInstancePath() {
@@ -743,7 +786,7 @@ async function validateInstancePath() {
         (data.warning ? `\n⚠ ${data.warning}` : '');
       vr.className = `validate-result show ${data.warning ? 'warn' : 'ok'}`;
       vr.textContent = msg;
-      // Auto-fill name from path basename if empty
+      // Auto-fill name/key from path basename if empty
       if (!document.getElementById('add-inst-name').value) {
         document.getElementById('add-inst-name').value = pathVal.split('/').filter(Boolean).pop() || '';
       }
@@ -752,8 +795,10 @@ async function validateInstancePath() {
           .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
         document.getElementById('add-inst-key').value = slug;
       }
+      updateAddSubmitBtn();
     } else {
       validatedPath = null;
+      updateAddSubmitBtn();
       vr.className = 'validate-result show fail';
       vr.textContent = `✗ ${data.error}`;
     }
@@ -874,10 +919,26 @@ function handleNewData(data) {
 
 // ─── Render ───────────────────────────────────────────────────────────────────
 function render() {
+  renderClosedBanner();
   renderStats();
   renderAgents();
   renderThreads();
   if (currentView === 'map') drawMap();
+}
+
+function renderClosedBanner() {
+  const existing = document.getElementById('mailbox-closed-banner');
+  if (state.mailbox && state.mailbox.closed) {
+    if (!existing) {
+      const banner = document.createElement('div');
+      banner.id = 'mailbox-closed-banner';
+      banner.style.cssText = 'background:#78350f;color:#fef3c7;padding:8px 16px;font-size:12px;font-weight:600;text-align:center;letter-spacing:.02em;border-bottom:1px solid #92400e;flex-shrink:0;';
+      banner.textContent = `⚠ This mailbox was closed${state.mailbox.closedDate ? ' on ' + state.mailbox.closedDate : ''} — read only. Run teardown.sh to view the cleanup checklist.`;
+      document.getElementById('app').insertBefore(banner, document.getElementById('stats-bar'));
+    }
+  } else if (existing) {
+    existing.remove();
+  }
 }
 
 function renderStats() {
