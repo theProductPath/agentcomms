@@ -45,6 +45,11 @@ That's it. You now have a working AgentComms instance with example files and a r
 bash ~/path/to/agentcomms/setup.sh --path ~/my-team/AgentComms --team "my-team"
 ```
 
+> **Running in a non-interactive environment (agent or CI)?** Use `--force` to skip the confirmation prompt when the target directory already exists:
+> ```bash
+> bash ~/path/to/agentcomms/setup.sh --force
+> ```
+
 ---
 
 ## Folder Structure

@@ -8,6 +8,7 @@ set -euo pipefail
 # ─── Defaults ────────────────────────────────────────────────────────────────
 TARGET="./AgentComms"
 TEAM=""
+FORCE=false
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCAFFOLD_DIR="$SCRIPT_DIR/scaffold"
 DASHBOARD_SRC="$SCRIPT_DIR/dashboard"
@@ -23,9 +24,13 @@ while [[ $# -gt 0 ]]; do
       TEAM="$2"
       shift 2
       ;;
+    --force)
+      FORCE=true
+      shift
+      ;;
     *)
       echo "Unknown argument: $1" >&2
-      echo "Usage: bash setup.sh [--path /path/to/destination] [--team \"my team\"]" >&2
+      echo "Usage: bash setup.sh [--path /path/to/destination] [--team \"my team\"] [--force]" >&2
       exit 1
       ;;
   esac
@@ -109,19 +114,27 @@ echo ""
 
 # ─── Existing directory check ────────────────────────────────────────────────
 if [[ -d "$TARGET" ]] && [[ -n "$(ls -A "$TARGET" 2>/dev/null)" ]]; then
-  echo "  ! Directory already exists: $TARGET"
-  echo ""
-  echo "  This will add example files and the dashboard to your existing setup."
-  echo "  Existing files will NOT be overwritten."
-  echo ""
-  printf "  Continue? [y/N] "
-  read -r REPLY
-  if [[ "$REPLY" != "y" && "$REPLY" != "Y" ]]; then
+  if [[ "$FORCE" == "true" ]]; then
+    echo "  ! Directory already exists: $TARGET"
+    echo "  → --force flag set, proceeding without prompt."
+    echo "  → Existing agent folders, threads, and archive will not be touched."
     echo ""
-    echo "  Aborted. No changes made."
-    exit 0
+  else
+    echo "  ! Directory already exists: $TARGET"
+    echo ""
+    echo "  This will add example files and the dashboard to your existing setup."
+    echo "  Existing files will NOT be overwritten."
+    echo ""
+    printf "  Continue? [y/N] "
+    REPLY=""
+    read -r REPLY </dev/tty 2>/dev/null || true
+    echo ""
+    if [[ "$REPLY" != "y" && "$REPLY" != "Y" ]]; then
+      echo "  Aborted. No changes made."
+      exit 0
+    fi
+    echo ""
   fi
-  echo ""
 fi
 
 # ─── Compute mailbox identity ────────────────────────────────────────────────
