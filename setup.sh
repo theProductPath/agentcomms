@@ -151,18 +151,13 @@ fi
 echo "→ Creating folder structure..."
 make_dir "$TARGET"
 make_dir "$TARGET/agents"
-make_dir "$TARGET/agents/example-orchestrator"
-make_dir "$TARGET/agents/example-orchestrator/inbox"
-make_dir "$TARGET/agents/example-orchestrator/inbox/processed"
-make_dir "$TARGET/agents/example-researcher"
-make_dir "$TARGET/agents/example-researcher/inbox"
-make_dir "$TARGET/agents/example-researcher/inbox/processed"
-make_dir "$TARGET/agents/example-writer"
-make_dir "$TARGET/agents/example-writer/inbox"
-make_dir "$TARGET/agents/example-writer/inbox/processed"
+make_dir "$TARGET/agents/example-agent"
+make_dir "$TARGET/agents/example-agent/inbox"
+make_dir "$TARGET/agents/example-agent/inbox/processed"
 make_dir "$TARGET/threads"
+make_dir "$TARGET/threads/2026-03-26_first-task"
 make_dir "$TARGET/archive"
-make_dir "$TARGET/archive/2026-01-01_example-research-mission"
+make_dir "$TARGET/archive/2026-03-26_completed-task"
 make_dir "$TARGET/dashboard"
 make_dir "$TARGET/scripts"
 echo ""
@@ -170,49 +165,57 @@ echo ""
 # ─── Step 2: Write example files ─────────────────────────────────────────────
 echo "→ Writing example files..."
 
-# Orchestrator inbox signals
 write_file \
-  "$SCAFFOLD_DIR/agents/example-orchestrator/inbox/processed/2026-01-01_mission-brief.md" \
-  "$TARGET/agents/example-orchestrator/inbox/processed/2026-01-01_mission-brief.md"
+  "$SCAFFOLD_DIR/agents/example-agent/inbox/.keep" \
+  "$TARGET/agents/example-agent/inbox/.keep"
 
 write_file \
-  "$SCAFFOLD_DIR/agents/example-orchestrator/inbox/processed/2026-01-01_research-complete.md" \
-  "$TARGET/agents/example-orchestrator/inbox/processed/2026-01-01_research-complete.md"
+  "$SCAFFOLD_DIR/agents/example-agent/inbox/2026-03-26_first-signal.md" \
+  "$TARGET/agents/example-agent/inbox/2026-03-26_first-signal.md"
 
 write_file \
-  "$SCAFFOLD_DIR/agents/example-orchestrator/inbox/processed/2026-01-01_memo-complete.md" \
-  "$TARGET/agents/example-orchestrator/inbox/processed/2026-01-01_memo-complete.md"
-
-# Researcher inbox signals
-write_file \
-  "$SCAFFOLD_DIR/agents/example-researcher/inbox/processed/2026-01-01_research-task.md" \
-  "$TARGET/agents/example-researcher/inbox/processed/2026-01-01_research-task.md"
-
-# Writer inbox signals
-write_file \
-  "$SCAFFOLD_DIR/agents/example-writer/inbox/processed/2026-01-01_writing-task.md" \
-  "$TARGET/agents/example-writer/inbox/processed/2026-01-01_writing-task.md"
-
-# Archive artifacts
-write_file \
-  "$SCAFFOLD_DIR/archive/2026-01-01_example-research-mission/brief.md" \
-  "$TARGET/archive/2026-01-01_example-research-mission/brief.md"
+  "$SCAFFOLD_DIR/agents/example-agent/inbox/2026-03-26_second-signal.md" \
+  "$TARGET/agents/example-agent/inbox/2026-03-26_second-signal.md"
 
 write_file \
-  "$SCAFFOLD_DIR/archive/2026-01-01_example-research-mission/status.md" \
-  "$TARGET/archive/2026-01-01_example-research-mission/status.md"
+  "$SCAFFOLD_DIR/agents/example-agent/inbox/processed/.keep" \
+  "$TARGET/agents/example-agent/inbox/processed/.keep"
 
 write_file \
-  "$SCAFFOLD_DIR/archive/2026-01-01_example-research-mission/researcher-summary.md" \
-  "$TARGET/archive/2026-01-01_example-research-mission/researcher-summary.md"
+  "$SCAFFOLD_DIR/agents/example-agent/inbox/processed/2026-03-25_processed-example.md" \
+  "$TARGET/agents/example-agent/inbox/processed/2026-03-25_processed-example.md"
 
 write_file \
-  "$SCAFFOLD_DIR/archive/2026-01-01_example-research-mission/writer-memo.md" \
-  "$TARGET/archive/2026-01-01_example-research-mission/writer-memo.md"
+  "$SCAFFOLD_DIR/threads/2026-03-26_first-task/brief.md" \
+  "$TARGET/threads/2026-03-26_first-task/brief.md"
 
 write_file \
-  "$SCAFFOLD_DIR/archive/2026-01-01_example-research-mission/result.md" \
-  "$TARGET/archive/2026-01-01_example-research-mission/result.md"
+  "$SCAFFOLD_DIR/threads/2026-03-26_first-task/context.md" \
+  "$TARGET/threads/2026-03-26_first-task/context.md"
+
+write_file \
+  "$SCAFFOLD_DIR/threads/2026-03-26_first-task/status.md" \
+  "$TARGET/threads/2026-03-26_first-task/status.md"
+
+write_file \
+  "$SCAFFOLD_DIR/threads/2026-03-26_first-task/result.md" \
+  "$TARGET/threads/2026-03-26_first-task/result.md"
+
+write_file \
+  "$SCAFFOLD_DIR/archive/2026-03-26_completed-task/brief.md" \
+  "$TARGET/archive/2026-03-26_completed-task/brief.md"
+
+write_file \
+  "$SCAFFOLD_DIR/archive/2026-03-26_completed-task/context.md" \
+  "$TARGET/archive/2026-03-26_completed-task/context.md"
+
+write_file \
+  "$SCAFFOLD_DIR/archive/2026-03-26_completed-task/status.md" \
+  "$TARGET/archive/2026-03-26_completed-task/status.md"
+
+write_file \
+  "$SCAFFOLD_DIR/archive/2026-03-26_completed-task/result.md" \
+  "$TARGET/archive/2026-03-26_completed-task/result.md"
 echo ""
 
 # ─── Step 3: Copy dashboard ──────────────────────────────────────────────────
@@ -349,9 +352,7 @@ if [[ ! -f "$MEMBERS_FILE" ]]; then
 
 | Agent | Joined | Status |
 |-------|--------|--------|
-| example-orchestrator | 2026-01-01 | active |
-| example-researcher | 2026-01-01 | active |
-| example-writer | 2026-01-01 | active |
+| example-agent | ${TODAY} | active |
 MEMBERS_EOF
   ok "agents/MEMBERS.md"
 else
@@ -434,7 +435,7 @@ echo "    dashboard/                   Web UI + server"
 echo "    scripts/                     Operator tools"
 echo ""
 echo "  Example content:"
-echo "    Three-agent Research & Write team (orchestrator, researcher, writer)"
+echo "    agents/example-agent/        Example agent with inbox signals"
 echo "    Completed mission with full artifact trail in archive/"
 echo ""
 echo "  Operator Tools:"
