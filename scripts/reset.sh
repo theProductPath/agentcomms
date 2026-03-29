@@ -152,7 +152,7 @@ if [[ "$EXAMPLE" == "true" ]]; then
 
   # 2. Check installer-path.txt at AC root
   elif [[ -f "$AC_ROOT/installer-path.txt" ]]; then
-    INSTALLER_CANDIDATE="$(cat "$AC_ROOT/installer-path.txt" | tr -d '[:space:]')"
+    INSTALLER_CANDIDATE="$(cat "$AC_ROOT/installer-path.txt" | tr -d '\n\r')"
     if [[ -d "$INSTALLER_CANDIDATE/scaffold" ]]; then
       INSTALLER_DIR="$INSTALLER_CANDIDATE"
       echo "  ✓ Found via installer-path.txt: $INSTALLER_DIR"
