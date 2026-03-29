@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="AgentComms — a structured file-system communication layer for agent teams. Inbox, thread, and archive conventions that let agents coordinate directly, without routing every handoff through a human.">
+  <title>AgentComms — Agent Coordination Without the Bottleneck</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --room-bg: #1a1a2e;
+      --wall: #0f3460;
+      --accent: #e94560;
+      --accent-light: #ff6b81;
+      --text: #eee;
+      --text-muted: #8892b0;
+      --card-bg: #1e2a4a;
+      --card-border: #2a3a5a;
+      --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font);
+      background: var(--room-bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    /* ===== NAV ===== */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 56px;
+      background: rgba(26, 26, 46, 0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      z-index: 100;
+    }
+
+    .nav-brand {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      color: var(--text);
+      text-decoration: none;
+    }
+    .nav-brand span { color: var(--accent); }
+
+    .nav-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-link:hover { color: var(--text); }
+
+    /* ===== SECTIONS ===== */
+    section { padding: 96px 32px; }
+
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    .container-wide {
+      max-width: 1080px;
+      margin: 0 auto;
+    }
+
+    /* ===== HERO ===== */
+    #hero {
+      padding-top: 140px;
+      padding-bottom: 112px;
+      text-align: center;
+      background:
+        radial-gradient(ellipse at 50% 0%, rgba(15, 52, 96, 0.55) 0%, transparent 65%),
+        var(--room-bg);
+    }
+
+    .hero-eyebrow {
+      display: inline-block;
+      background: rgba(233, 69, 96, 0.12);
+      color: var(--accent-light);
+      border: 1px solid rgba(233, 69, 96, 0.3);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 20px;
+      margin-bottom: 28px;
+    }
+
+    h1 {
+      font-size: clamp(36px, 6vw, 62px);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -1px;
+      margin-bottom: 24px;
+    }
+
+    h1 em {
+      font-style: normal;
+      color: var(--accent);
+    }
+
+    .hero-sub {
+      font-size: clamp(16px, 2.2vw, 20px);
+      color: var(--text-muted);
+      max-width: 600px;
+      margin: 0 auto 44px;
+      line-height: 1.65;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--accent);
+      color: #fff;
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 600;
+      padding: 14px 28px;
+      border-radius: 10px;
+      transition: background 0.2s, transform 0.15s;
+      letter-spacing: 0.2px;
+    }
+    .btn-primary:hover {
+      background: var(--accent-light);
+      transform: translateY(-1px);
+    }
+
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 500;
+      padding: 14px 24px;
+      border-radius: 10px;
+      border: 1px solid var(--card-border);
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .btn-ghost:hover { color: var(--text); border-color: var(--text-muted); }
+
+    .hero-ctas {
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    /* ===== PROBLEM ===== */
+    #problem {
+      background: var(--wall);
+    }
+
+    h2 {
+      font-size: clamp(26px, 4vw, 40px);
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+      margin-bottom: 20px;
+    }
+
+    .section-lead {
+      font-size: 18px;
+      color: var(--text-muted);
+      max-width: 640px;
+      margin-bottom: 52px;
+      line-height: 1.7;
+    }
+
+    .problem-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 24px;
+    }
+
+    .problem-card {
+      background: rgba(0,0,0,0.25);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      padding: 28px;
+    }
+
+    .problem-card .icon {
+      font-size: 28px;
+      margin-bottom: 14px;
+    }
+
+    .problem-card h3 {
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .problem-card p {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.65;
+    }
+
+    /* ===== WHAT IT IS ===== */
+    #what {
+      background: var(--room-bg);
+    }
+
+    .what-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      align-items: center;
+    }
+
+    @media (max-width: 680px) {
+      .what-body { grid-template-columns: 1fr; }
+    }
+
+    .what-text p {
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      font-size: 16px;
+      line-height: 1.75;
+    }
+
+    .zone-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .zone-item {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-left: 3px solid var(--accent);
+      border-radius: 8px;
+      padding: 18px 20px;
+    }
+
+    .zone-item .zone-name {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 13px;
+      color: var(--accent-light);
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .zone-item p {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin: 0;
+    }
+
+    /* ===== HOW IT'S DIFFERENT ===== */
+    #different {
+      background: var(--wall);
+    }
+
+    .diff-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      margin-top: 48px;
+    }
+
+    .diff-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 32px 28px;
+    }
+
+    .diff-card .diff-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: rgba(233, 69, 96, 0.12);
+      border: 1px solid rgba(233, 69, 96, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      margin-bottom: 18px;
+    }
+
+    .diff-card h3 {
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    .diff-card p {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+
+    /* ===== HOW IT WORKS ===== */
+    #how {
+      background: var(--room-bg);
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0;
+      margin-top: 56px;
+      position: relative;
+    }
+
+    .steps::before {
+      content: '';
+      position: absolute;
+      top: 28px;
+      left: calc(16.6% + 28px);
+      right: calc(16.6% + 28px);
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), rgba(233,69,96,0.2));
+      z-index: 0;
+    }
+
+    @media (max-width: 640px) {
+      .steps::before { display: none; }
+      .steps { gap: 24px; }
+    }
+
+    .step {
+      text-align: center;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .step-num {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 22px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      border: 3px solid var(--room-bg);
+    }
+
+    .step h3 {
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    .step p {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.65;
+    }
+
+    .step .step-label {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 11px;
+      color: var(--accent-light);
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      opacity: 0.8;
+    }
+
+    /* ===== GET STARTED ===== */
+    #start {
+      background: var(--wall);
+      text-align: center;
+    }
+
+    #start .container {
+      max-width: 640px;
+    }
+
+    #start h2 { margin-bottom: 16px; }
+
+    #start .section-lead {
+      margin: 0 auto 40px;
+    }
+
+    .code-block {
+      background: rgba(0,0,0,0.35);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 20px 24px;
+      margin-bottom: 36px;
+      text-align: left;
+      overflow-x: auto;
+    }
+
+    .code-block code {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 14px;
+      color: var(--accent-light);
+      white-space: pre;
+      line-height: 1.8;
+    }
+
+    .code-comment { color: var(--text-muted); }
+
+    .start-ctas {
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    /* ===== FOOTER ===== */
+    footer {
+      background: var(--room-bg);
+      border-top: 1px solid var(--card-border);
+      padding: 40px 32px;
+      text-align: center;
+    }
+
+    footer p {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    footer a {
+      color: var(--text-muted);
+      text-decoration: none;
+    }
+    footer a:hover { color: var(--text); }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 600px) {
+      nav { padding: 0 20px; }
+      section { padding: 72px 20px; }
+      #hero { padding-top: 112px; padding-bottom: 80px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a href="#" class="nav-brand">Agent<span>Comms</span></a>
+    <a href="https://github.com/theProductPath/agentcomms" class="nav-link" target="_blank" rel="noopener">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.21 11.39.6.11.82-.26.82-.58v-2.03c-3.34.73-4.04-1.61-4.04-1.61-.54-1.38-1.33-1.75-1.33-1.75-1.09-.74.08-.73.08-.73 1.2.08 1.84 1.23 1.84 1.23 1.07 1.83 2.8 1.3 3.48 1 .1-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.12-.31-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 3-.4c1.02 0 2.04.13 3 .4 2.28-1.55 3.29-1.23 3.29-1.23.66 1.66.24 2.87.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.63-5.48 5.92.43.37.81 1.1.81 2.22v3.29c0 .32.21.7.82.58C20.56 21.8 24 17.3 24 12c0-6.63-5.37-12-12-12z"/>
+      </svg>
+      View on GitHub
+    </a>
+  </nav>
+
+  <!-- HERO -->
+  <section id="hero">
+    <div class="container">
+      <div class="hero-eyebrow">Open Source · Zero Dependencies</div>
+      <h1>Agent coordination<br>without the <em>bottleneck</em></h1>
+      <p class="hero-sub">
+        A structured file-system protocol for agent teams. Inboxes, threads, and archives — so agents coordinate directly, and humans stay in the loop without becoming the relay.
+      </p>
+      <div class="hero-ctas">
+        <a href="https://github.com/theProductPath/agentcomms" class="btn-primary" target="_blank" rel="noopener">
+          View on GitHub →
+        </a>
+        <a href="#how" class="btn-ghost">See how it works</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROBLEM -->
+  <section id="problem">
+    <div class="container">
+      <h2>Every agent team hits the same wall</h2>
+      <p class="section-lead">
+        You build a capable team of specialized agents. Then you discover that every handoff routes through you — forwarding context, re-explaining tasks, translating between agents. You become the bottleneck you were trying to remove.
+      </p>
+      <div class="problem-grid">
+        <div class="problem-card">
+          <div class="icon">🔁</div>
+          <h3>The Human Relay Problem</h3>
+          <p>Agents are good at their jobs. They're not good at knowing what other agents need, or when. Every handoff becomes a manual step.</p>
+        </div>
+        <div class="problem-card">
+          <div class="icon">🌫️</div>
+          <h3>Context Gets Lost</h3>
+          <p>Work passes between agents in chat threads, inline prompts, or fragile filenames. The artifact trail disappears. Decisions are unmade and remade.</p>
+        </div>
+        <div class="problem-card">
+          <div class="icon">👁️</div>
+          <h3>No Visibility Without Interruption</h3>
+          <p>The only way to know what's in flight is to ask every agent. There's no standing view of who has work, what's blocked, or what's done.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHAT IT IS -->
+  <section id="what">
+    <div class="container-wide">
+      <div class="what-body">
+        <div class="what-text">
+          <h2>A folder convention with structure that actually holds</h2>
+          <p>
+            AgentComms is a three-zone filesystem protocol. Each zone has a single rule. Everything else follows naturally.
+          </p>
+          <p>
+            No cloud dependency. No npm. No build step. A shell script creates your instance. The dashboard gives you live visibility. Agents work from plain Markdown — the same format they already read and write.
+          </p>
+          <p>
+            The repo is the installer. Your AgentComms instance lives wherever you want it — local, shared drive, or any path your agents can reach.
+          </p>
+        </div>
+        <div class="zone-list">
+          <div class="zone-item">
+            <div class="zone-name">agents/*/inbox/</div>
+            <p><strong>Routing signals only.</strong> Inbox files say "there's work for you in threads/." Small, fast, easy to scan. Nothing more.</p>
+          </div>
+          <div class="zone-item">
+            <div class="zone-name">threads/</div>
+            <p><strong>All active work.</strong> Each task gets a folder: brief, context, status, Q&A, and result. One folder, full artifact trail.</p>
+          </div>
+          <div class="zone-item">
+            <div class="zone-name">archive/</div>
+            <p><strong>Completed threads.</strong> Everything done moves here. The archive is never deleted. History is always intact.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT'S DIFFERENT -->
+  <section id="different">
+    <div class="container-wide">
+      <h2>What makes it different</h2>
+      <p class="section-lead">Most agent coordination tools require infrastructure. AgentComms requires a folder and a convention.</p>
+      <div class="diff-grid">
+        <div class="diff-card">
+          <div class="diff-icon">📂</div>
+          <h3>Filesystem-native</h3>
+          <p>Every agent, every tool, every environment can read and write files. No integration work. No API keys. No platform lock-in.</p>
+        </div>
+        <div class="diff-card">
+          <div class="diff-icon">📄</div>
+          <h3>Brief-first discipline</h3>
+          <p>No brief, no work. Every task starts with a written spec. The brief is the contract — between the requester, the agent, and the record.</p>
+        </div>
+        <div class="diff-card">
+          <div class="diff-icon">🔍</div>
+          <h3>Human-observable at every point</h3>
+          <p>The dashboard shows who has work, what's in flight, and what's blocked — without interrupting any agent. Visibility without disruption.</p>
+        </div>
+        <div class="diff-card">
+          <div class="diff-icon">📦</div>
+          <h3>Zero-dependency server</h3>
+          <p>The dashboard runs on Node.js built-ins only. No <code>package.json</code>. No <code>node_modules</code>. Works with Node ≥ 14, anywhere.</p>
+        </div>
+        <div class="diff-card">
+          <div class="diff-icon">♻️</div>
+          <h3>Persistent artifact trail</h3>
+          <p>Q&A, briefs, results, and status all live in the thread folder. The archive is never deleted. You can reconstruct exactly what happened and why.</p>
+        </div>
+        <div class="diff-card">
+          <div class="diff-icon">🧩</div>
+          <h3>Any agent, any model</h3>
+          <p>AgentComms is model-agnostic. OpenAI, Anthropic, open-source — if it can read and write files, it works with AgentComms.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how">
+    <div class="container-wide">
+      <div style="text-align: center; margin-bottom: 0;">
+        <h2>How it works</h2>
+        <p class="section-lead" style="margin: 16px auto 0;">Three steps. Every agent. Every task.</p>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-label">inbox/</div>
+          <h3>Signal arrives</h3>
+          <p>A routing signal lands in the agent's inbox. It points to a thread folder. One file, one pointer — nothing more.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-label">threads/</div>
+          <h3>Agent does the work</h3>
+          <p>The agent reads the brief, asks questions in the thread, does the work, writes the result. The full artifact trail builds as it goes.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-label">archive/</div>
+          <h3>Thread is archived</h3>
+          <p>Status updates to done. The thread moves to archive. Inbox clears. The next task begins. Nothing is lost.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GET STARTED -->
+  <section id="start">
+    <div class="container">
+      <h2>Get started in one command</h2>
+      <p class="section-lead">Clone the repo, run setup, and you have a working AgentComms instance with an example team and a live dashboard.</p>
+      <div class="code-block">
+        <code><span class="code-comment"># Clone the installer</span>
+git clone https://github.com/theProductPath/agentcomms.git
+
+<span class="code-comment"># Move to where you want your AgentComms to live</span>
+cd ~/Documents
+
+<span class="code-comment"># Run setup</span>
+bash ~/agentcomms/setup.sh
+
+<span class="code-comment"># Start the dashboard at localhost:7843</span>
+bash AgentComms/dashboard/start.sh</code>
+      </div>
+      <div class="start-ctas">
+        <a href="https://github.com/theProductPath/agentcomms" class="btn-primary" target="_blank" rel="noopener">
+          View on GitHub →
+        </a>
+        <a href="https://github.com/theProductPath/agentcomms#readme" class="btn-ghost" target="_blank" rel="noopener">
+          Read the docs
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>
+      AgentComms · Built by <a href="https://theproductpath.com" target="_blank" rel="noopener">The Product Path</a> ·
+      <a href="https://github.com/theProductPath/agentcomms" target="_blank" rel="noopener">GitHub</a> ·
+      MIT License
+    </p>
+  </footer>
+
+</body>
+</html>
