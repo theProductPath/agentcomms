@@ -299,7 +299,7 @@ function scanAgentComms(instancePath) {
       const fp = path.join(inboxPath, f);
       const s  = safeStat(fp);
       return { name: f, path: fp, mtime: s ? s.mtimeMs : 0 };
-    }).sort((a, b) => a.name.localeCompare(b.name));
+    }).sort((a, b) => b.name.localeCompare(a.name)); // newest first
 
     const processedFiles = safeReadDir(processedPath).filter(f =>
       f !== '.keep' && !f.startsWith('.')
