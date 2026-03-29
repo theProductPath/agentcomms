@@ -1,3 +1,0 @@
-# Task Result
-
-(In progress)
