@@ -106,6 +106,31 @@
   .stop-btn { color: var(--red); border-color: var(--red); }
   .stop-btn:hover { background: rgba(239, 68, 68, 0.1); }
 
+  /* ─── Dispatcher Pill ────────────────────────────────────────────────── */
+  .dispatcher-pill {
+    padding: 5px 10px; border-radius: 100px; font-size: 11px; font-weight: 600;
+    border: 1px solid var(--border); cursor: pointer; white-space: nowrap;
+    display: flex; align-items: center; gap: 5px;
+    transition: opacity .15s, background .15s;
+  }
+  .dispatcher-pill:hover { opacity: .85; }
+  .dispatcher-pill.on   { background: rgba(34,197,94,.15); border-color: rgba(34,197,94,.5); color: var(--green); }
+  .dispatcher-pill.off  { background: rgba(239,68,68,.12); border-color: rgba(239,68,68,.4); color: var(--red); }
+  .dispatcher-pill.unknown { background: transparent; border-color: var(--border); color: var(--muted); cursor: default; }
+  .dispatcher-pill.loading { opacity: .5; cursor: wait; pointer-events: none; }
+
+  /* ─── Wake Button ────────────────────────────────────────────────────── */
+  .wake-btn {
+    padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 600;
+    background: rgba(99,102,241,.15); border: 1px solid rgba(99,102,241,.4); color: var(--indigo);
+    cursor: pointer; white-space: nowrap; transition: all .15s;
+    display: inline-flex; align-items: center; gap: 3px;
+  }
+  .wake-btn:hover:not(:disabled) { background: rgba(99,102,241,.3); border-color: var(--indigo); }
+  .wake-btn:disabled { opacity: .35; cursor: not-allowed; pointer-events: none; }
+  .wake-btn.sent { background: rgba(34,197,94,.15); border-color: rgba(34,197,94,.4); color: var(--green); }
+  .wake-btn.error { background: rgba(239,68,68,.12); border-color: rgba(239,68,68,.4); color: var(--red); }
+
   /* ─── Stats Bar ─────────────────────────────────────────────────────── */
   #stats-bar {
     display: flex; gap: 1px;
@@ -451,6 +476,7 @@
       <div class="live-dot" id="live-dot"></div>
       <span id="live-text">Connecting…</span>
     </div>
+    <button id="dispatcher-pill" class="dispatcher-pill unknown" title="Dispatcher status — click to toggle" onclick="toggleDispatcher()">Dispatcher ?</button>
     <button id="stop-btn" class="header-btn stop-btn" title="Stop the dashboard server">⏹ Stop</button>
   </header>
 
@@ -918,6 +944,16 @@ function setLiveStatus(connected) {
 let isFirstRender = true;
 
 function handleNewData(data) {
+  // Handle dispatcher SSE events without full re-render
+  if (data && data.type === 'dispatcher') {
+    updateDispatcherPill(data.enabled === true ? true : data.enabled === false ? false : null);
+    return;
+  }
+  // Handle instances-changed events
+  if (data && data.type === 'instances-changed') {
+    loadInstances();
+    return;
+  }
   state = data;
   if (isFirstRender) {
     document.getElementById('inbox-panel').classList.remove('open');
@@ -1000,6 +1036,8 @@ function renderAgents() {
       a.ghost          ? `<div class="tag ghost-tag">👻 ghost</div>` : '',
     ].filter(Boolean).join('');
 
+    const wakeBtn = !a.ghost ? `<button class="wake-btn" id="wake-btn-${encodeId(a.name)}" onclick="wakeAgent(event,'${escStr(a.name)}')" ${!hasInbox ? 'disabled' : ''} title="${hasInbox ? `Wake ${a.name} to process inbox` : 'No inbox items'}">▶ Wake</button>` : '';
+
     return `<div class="agent-card ${cardClass}${sel}" onclick="selectAgent('${escStr(a.name)}')">
       <div class="agent-top">
         <div class="agent-emoji-wrap">
@@ -1012,6 +1050,7 @@ function renderAgents() {
       <div class="agent-meta">
         <div class="agent-time">${a.ghost ? 'no folder' : a.lastActive}</div>
         ${badges}
+        ${wakeBtn}
       </div>
     </div>`;
   }).join('');
@@ -1361,6 +1400,120 @@ function escHtml(s) {
 }
 function encodeId(s) { return String(s).replace(/[^a-z0-9]/gi, '_'); }
 
+// ─── Dispatcher ───────────────────────────────────────────────────────────────
+
+let dispatcherEnabled = null; // true | false | null (unknown)
+
+function updateDispatcherPill(enabled) {
+  dispatcherEnabled = enabled;
+  const pill = document.getElementById('dispatcher-pill');
+  if (!pill) return;
+  pill.classList.remove('on', 'off', 'unknown', 'loading');
+  if (enabled === true) {
+    pill.classList.add('on');
+    pill.innerHTML = '● Dispatcher ON';
+    pill.title = 'Dispatcher is ON — click to disable';
+    pill.style.pointerEvents = '';
+  } else if (enabled === false) {
+    pill.classList.add('off');
+    pill.innerHTML = '○ Dispatcher OFF';
+    pill.title = 'Dispatcher is OFF — click to enable';
+    pill.style.pointerEvents = '';
+  } else {
+    pill.classList.add('unknown');
+    pill.innerHTML = 'Dispatcher ?';
+    pill.title = 'Dispatcher status unknown or not configured';
+    pill.style.pointerEvents = 'none';
+  }
+}
+
+async function fetchDispatcherStatus() {
+  try {
+    const res  = await fetch('/dispatcher/status');
+    const data = await res.json();
+    if (data.ok === false) {
+      updateDispatcherPill(null);
+    } else {
+      updateDispatcherPill(data.enabled === true ? true : data.enabled === false ? false : null);
+    }
+  } catch (_) {
+    updateDispatcherPill(null);
+  }
+}
+
+async function toggleDispatcher() {
+  const pill = document.getElementById('dispatcher-pill');
+  if (!pill || dispatcherEnabled === null) return;
+  pill.classList.add('loading');
+  try {
+    const enable = !dispatcherEnabled;
+    const res    = await fetch('/dispatcher/toggle', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ enable }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      updateDispatcherPill(data.enabled);
+    } else {
+      pill.classList.remove('loading');
+      console.error('Dispatcher toggle error:', data.error);
+    }
+  } catch (e) {
+    pill.classList.remove('loading');
+    console.error('Dispatcher toggle fetch error:', e.message);
+  }
+}
+
+// ─── Agent Wake ───────────────────────────────────────────────────────────────
+
+async function wakeAgent(event, agentId) {
+  event.stopPropagation(); // don't trigger agent card select
+  const btn = document.getElementById(`wake-btn-${encodeId(agentId)}`);
+  if (!btn || btn.disabled) return;
+
+  const orig = btn.innerHTML;
+  btn.innerHTML = 'Waking…';
+  btn.disabled = true;
+
+  try {
+    const res  = await fetch('/dispatcher/wake', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ agentId }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      btn.classList.add('sent');
+      btn.innerHTML = 'Sent ✓';
+      setTimeout(() => {
+        btn.classList.remove('sent');
+        btn.innerHTML = orig;
+        btn.disabled = false;
+      }, 3000);
+    } else {
+      btn.classList.add('error');
+      btn.innerHTML = '✗ Error';
+      btn.title = data.error || 'Unknown error';
+      setTimeout(() => {
+        btn.classList.remove('error');
+        btn.innerHTML = orig;
+        btn.disabled = false;
+        btn.title = `Wake ${agentId} to process inbox`;
+      }, 4000);
+    }
+  } catch (e) {
+    btn.classList.add('error');
+    btn.innerHTML = '✗ Failed';
+    btn.title = e.message;
+    setTimeout(() => {
+      btn.classList.remove('error');
+      btn.innerHTML = orig;
+      btn.disabled = false;
+    }, 4000);
+  }
+}
+
 // ─── Stop Button ─────────────────────────────────────────────────────────────
 document.getElementById('stop-btn').addEventListener('click', async () => {
   if (!confirm('Stop the AgentComms Dashboard server?')) return;
@@ -1386,6 +1539,7 @@ document.addEventListener('keydown', (e) => {
   await loadInstances();
   const key = currentInstance ? currentInstance.key : '';
   connectSSE(key);
+  fetchDispatcherStatus();
 })();
 </script>
 </body>
