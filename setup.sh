@@ -83,7 +83,7 @@ slugify() {
 # ─── Welcome header ──────────────────────────────────────────────────────────
 echo ""
 echo "┌─────────────────────────────────────────────────┐"
-echo "│  AgentComms  ·  v0.7  ·  theProductPath          │"
+echo "│  AgentComms  ·  v0.8  ·  theProductPath          │"
 echo "│  Local setup for your agent team                 │"
 echo "└─────────────────────────────────────────────────┘"
 echo ""
@@ -222,7 +222,26 @@ else
 fi
 echo ""
 
-# ─── Step 3b: Write instances.json for dashboard ────────────────────────────
+# ─── Step 3b: Create config/ and dispatcher.json ────────────────────────────
+echo "→ Creating config folder..."
+make_dir "$TARGET/config"
+
+DISPATCHER_CONFIG="$TARGET/config/dispatcher.json"
+if [[ ! -f "$DISPATCHER_CONFIG" ]]; then
+  cat > "$DISPATCHER_CONFIG" << 'DISPATCHER_EOF'
+{
+  "jobId": "",
+  "openclawBin": "openclaw",
+  "enabled": true
+}
+DISPATCHER_EOF
+  ok "config/dispatcher.json"
+else
+  skip "config/dispatcher.json"
+fi
+echo ""
+
+# ─── Step 3c: Write instances.json for dashboard ────────────────────────────
 echo "→ Writing instances.json..."
 INSTANCES_FILE="$TARGET/dashboard/instances.json"
 if [[ ! -f "$INSTANCES_FILE" ]]; then
@@ -235,7 +254,7 @@ else
 fi
 echo ""
 
-# ─── Step 3c: Copy scripts ───────────────────────────────────────────────────
+# ─── Step 3d: Copy scripts ───────────────────────────────────────────────────
 echo "→ Copying scripts..."
 SCRIPTS_SRC="$SCRIPT_DIR/scripts"
 if [[ -d "$SCRIPTS_SRC" ]]; then
@@ -401,6 +420,10 @@ echo "    bash $TARGET/scripts/wake.sh <agent>      — wake an agent manually"
 if [[ -f "$TARGET/scripts/teardown.sh" ]]; then
 echo "    bash $TARGET/scripts/teardown.sh          — close this mailbox"
 fi
+echo ""
+echo "  Dispatcher:  Edit AgentComms/config/dispatcher.json to enable the"
+echo "               dispatcher toggle (set jobId to your OpenClaw cron job ID)."
+echo "               Run: openclaw cron list   to find your job ID."
 echo ""
 echo "  Next step:   See AGENT-ONBOARDING.md to add your first agent."
 echo "─────────────────────────────────────────────────────"
