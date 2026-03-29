@@ -185,7 +185,7 @@ On each agent card, add a **Wake ▶** button that appears when `inboxCount > 0`
 - [ ] `GET /dispatcher/status` returns enabled state
 - [ ] `POST /dispatcher/toggle` enables/disables dispatcher cron; broadcasts SSE event
 - [ ] `POST /dispatcher/wake` spawns agent via Gateway REST API
-- [ ] `server.js.shorty-ref` removed from repo (superseded by v0.8)
+- [ ] `server.js.shorty-ref` retained in repo as-is (do not modify or delete)
 - [ ] Frontend: dispatcher status pill in header with toggle
 - [ ] Frontend: Wake button on agent cards when inbox > 0
 - [ ] Dashboard tested against tPP, IT-Comms, and MJ instances
@@ -195,7 +195,7 @@ On each agent card, add a **Wake ▶** button that appears when `inboxCount > 0`
 
 ## Notes
 
-- `server.js.shorty-ref` was added to the repo as a snapshot of Shorty's diverged local build. Once v0.8 ships, that file should be deleted — the divergence is resolved.
+- `server.js.shorty-ref` stays in the repo. Don't touch it.
 - Port stays at `7843`. If the repo was shipping `7842`, that's now superseded. Update `start.sh` accordingly.
 - Shorty's local copy (`workspace/apps/agentcomms-dashboard/`) should be replaced with the v0.8 build when Codey ships it. Shorty will restart the server at that point.
 
