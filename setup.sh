@@ -151,62 +151,68 @@ fi
 echo "→ Creating folder structure..."
 make_dir "$TARGET"
 make_dir "$TARGET/agents"
-make_dir "$TARGET/agents/example-agent"
-make_dir "$TARGET/agents/example-agent/inbox"
-make_dir "$TARGET/agents/example-agent/inbox/processed"
+make_dir "$TARGET/agents/example-orchestrator"
+make_dir "$TARGET/agents/example-orchestrator/inbox"
+make_dir "$TARGET/agents/example-orchestrator/inbox/processed"
+make_dir "$TARGET/agents/example-researcher"
+make_dir "$TARGET/agents/example-researcher/inbox"
+make_dir "$TARGET/agents/example-researcher/inbox/processed"
+make_dir "$TARGET/agents/example-writer"
+make_dir "$TARGET/agents/example-writer/inbox"
+make_dir "$TARGET/agents/example-writer/inbox/processed"
 make_dir "$TARGET/threads"
-make_dir "$TARGET/threads/2026-03-26_first-task"
 make_dir "$TARGET/archive"
-make_dir "$TARGET/archive/2026-03-26_completed-task"
+make_dir "$TARGET/archive/2026-01-01_example-research-mission"
 make_dir "$TARGET/dashboard"
 make_dir "$TARGET/scripts"
 echo ""
 
 # ─── Step 2: Write example files ─────────────────────────────────────────────
 echo "→ Writing example files..."
+
+# Orchestrator inbox signals
 write_file \
-  "$SCAFFOLD_DIR/agents/example-agent/inbox/2026-03-26_first-signal.md" \
-  "$TARGET/agents/example-agent/inbox/2026-03-26_first-signal.md"
+  "$SCAFFOLD_DIR/agents/example-orchestrator/inbox/processed/2026-01-01_mission-brief.md" \
+  "$TARGET/agents/example-orchestrator/inbox/processed/2026-01-01_mission-brief.md"
 
 write_file \
-  "$SCAFFOLD_DIR/agents/example-agent/inbox/2026-03-26_second-signal.md" \
-  "$TARGET/agents/example-agent/inbox/2026-03-26_second-signal.md"
+  "$SCAFFOLD_DIR/agents/example-orchestrator/inbox/processed/2026-01-01_research-complete.md" \
+  "$TARGET/agents/example-orchestrator/inbox/processed/2026-01-01_research-complete.md"
 
 write_file \
-  "$SCAFFOLD_DIR/agents/example-agent/inbox/processed/.keep" \
-  "$TARGET/agents/example-agent/inbox/processed/.keep"
+  "$SCAFFOLD_DIR/agents/example-orchestrator/inbox/processed/2026-01-01_memo-complete.md" \
+  "$TARGET/agents/example-orchestrator/inbox/processed/2026-01-01_memo-complete.md"
+
+# Researcher inbox signals
+write_file \
+  "$SCAFFOLD_DIR/agents/example-researcher/inbox/processed/2026-01-01_research-task.md" \
+  "$TARGET/agents/example-researcher/inbox/processed/2026-01-01_research-task.md"
+
+# Writer inbox signals
+write_file \
+  "$SCAFFOLD_DIR/agents/example-writer/inbox/processed/2026-01-01_writing-task.md" \
+  "$TARGET/agents/example-writer/inbox/processed/2026-01-01_writing-task.md"
+
+# Archive artifacts
+write_file \
+  "$SCAFFOLD_DIR/archive/2026-01-01_example-research-mission/brief.md" \
+  "$TARGET/archive/2026-01-01_example-research-mission/brief.md"
 
 write_file \
-  "$SCAFFOLD_DIR/agents/example-agent/inbox/processed/2026-03-25_processed-example.md" \
-  "$TARGET/agents/example-agent/inbox/processed/2026-03-25_processed-example.md"
+  "$SCAFFOLD_DIR/archive/2026-01-01_example-research-mission/status.md" \
+  "$TARGET/archive/2026-01-01_example-research-mission/status.md"
 
 write_file \
-  "$SCAFFOLD_DIR/threads/2026-03-26_first-task/brief.md" \
-  "$TARGET/threads/2026-03-26_first-task/brief.md"
+  "$SCAFFOLD_DIR/archive/2026-01-01_example-research-mission/researcher-summary.md" \
+  "$TARGET/archive/2026-01-01_example-research-mission/researcher-summary.md"
 
 write_file \
-  "$SCAFFOLD_DIR/threads/2026-03-26_first-task/context.md" \
-  "$TARGET/threads/2026-03-26_first-task/context.md"
+  "$SCAFFOLD_DIR/archive/2026-01-01_example-research-mission/writer-memo.md" \
+  "$TARGET/archive/2026-01-01_example-research-mission/writer-memo.md"
 
 write_file \
-  "$SCAFFOLD_DIR/threads/2026-03-26_first-task/status.md" \
-  "$TARGET/threads/2026-03-26_first-task/status.md"
-
-write_file \
-  "$SCAFFOLD_DIR/threads/2026-03-26_first-task/result.md" \
-  "$TARGET/threads/2026-03-26_first-task/result.md"
-
-write_file \
-  "$SCAFFOLD_DIR/archive/2026-03-26_completed-task/brief.md" \
-  "$TARGET/archive/2026-03-26_completed-task/brief.md"
-
-write_file \
-  "$SCAFFOLD_DIR/archive/2026-03-26_completed-task/status.md" \
-  "$TARGET/archive/2026-03-26_completed-task/status.md"
-
-write_file \
-  "$SCAFFOLD_DIR/archive/2026-03-26_completed-task/result.md" \
-  "$TARGET/archive/2026-03-26_completed-task/result.md"
+  "$SCAFFOLD_DIR/archive/2026-01-01_example-research-mission/result.md" \
+  "$TARGET/archive/2026-01-01_example-research-mission/result.md"
 echo ""
 
 # ─── Step 3: Copy dashboard ──────────────────────────────────────────────────
@@ -287,6 +293,17 @@ else
 fi
 echo ""
 
+# ─── Step 4b: Write installer-path.txt at AC root ────────────────────────────
+echo "→ Writing installer-path.txt..."
+INSTALLER_PATH_FILE="$TARGET/installer-path.txt"
+if [[ ! -f "$INSTALLER_PATH_FILE" ]]; then
+  echo "$SCRIPT_DIR" > "$INSTALLER_PATH_FILE"
+  ok "installer-path.txt"
+else
+  skip "installer-path.txt"
+fi
+echo ""
+
 # ─── Step 5: Write agentcomms-version file (for backward compat) ─────────────
 echo "→ Writing version tag..."
 VERSION_FILE="$TARGET/agentcomms-version"
@@ -332,7 +349,9 @@ if [[ ! -f "$MEMBERS_FILE" ]]; then
 
 | Agent | Joined | Status |
 |-------|--------|--------|
-| example-agent | ${TODAY} | active |
+| example-orchestrator | 2026-01-01 | active |
+| example-researcher | 2026-01-01 | active |
+| example-writer | 2026-01-01 | active |
 MEMBERS_EOF
   ok "agents/MEMBERS.md"
 else
@@ -408,15 +427,20 @@ echo "  Dashboard:   bash $TARGET/dashboard/start.sh"
 echo "               → Starts at http://localhost:7843"
 echo ""
 echo "  Folder Structure:"
-echo "    agents/example-agent/        Your team's agent inboxes"
+echo "    agents/                      Your team's agent inboxes"
 echo "    threads/                     Active work"
 echo "    archive/                     Completed tasks"
 echo "    dashboard/                   Web UI + server"
 echo "    scripts/                     Operator tools"
 echo ""
+echo "  Example content:"
+echo "    Three-agent Research & Write team (orchestrator, researcher, writer)"
+echo "    Completed mission with full artifact trail in archive/"
+echo ""
 echo "  Operator Tools:"
 echo "    bash $TARGET/scripts/inbox-snapshot.sh   — inbox status report"
 echo "    bash $TARGET/scripts/wake.sh <agent>      — wake an agent manually"
+echo "    bash $TARGET/scripts/reset.sh             — wipe to clean or restore example"
 if [[ -f "$TARGET/scripts/teardown.sh" ]]; then
 echo "    bash $TARGET/scripts/teardown.sh          — close this mailbox"
 fi
