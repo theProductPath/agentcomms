@@ -1,5 +1,6 @@
+#!/usr/bin/env node
 /**
- * AgentComms Dashboard — server.js  (v0.7)
+ * AgentComms Dashboard — server.js  (v0.8)
  * Zero external dependencies. Node.js built-ins only.
  * Node.js >= 14 required.
  *
@@ -10,25 +11,22 @@
  * Config:
  *   AGENTCOMMS_PATH env var   — absolute path to your AgentComms folder
  *   AGENTCOMMS_PORT env var   — override default port
+ *   config/dispatcher.json   — dispatcher job ID and openclaw binary path
  */
 
 'use strict';
 
-const http = require('http');
-const fs   = require('fs');
-const path = require('path');
+const http          = require('http');
+const fs            = require('fs');
+const path          = require('path');
+const { execSync }  = require('child_process');
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
-// Path to your AgentComms folder. Defaults to the parent of this file's parent.
-// Override with AGENTCOMMS_PATH env var.
-const AGENTCOMMS_DEFAULT = process.env.AGENTCOMMS_PATH
-  || path.resolve(__dirname, '..');
-
-// Port can be specified via AGENTCOMMS_PORT env var, CLI arg, or defaults to 7843
 const DEFAULT_PORT = 7843;
 
-// Map agent folder names to display emojis.
+// ─── AGENT_EMOJIS ─────────────────────────────────────────────────────────────
+
 const AGENT_EMOJIS = {
   'ac-dev':        '👨🏽\u200d💻',
   'ac-orch':       '🎯',
@@ -53,16 +51,23 @@ const AGENT_EMOJIS = {
 
 // ─── Instances ────────────────────────────────────────────────────────────────
 
-const INSTANCES_FILE     = path.join(__dirname, 'instances.json');
-const SUPPORTED_VERSION  = 1;
+const INSTANCES_FILE    = path.join(__dirname, 'instances.json');
+const SUPPORTED_VERSION = 1;
+
+// Path to AgentComms folder — used as default instance if instances.json missing
+const AGENTCOMMS_DEFAULT = process.env.AGENTCOMMS_PATH
+  || path.resolve(__dirname, '..');
 
 function loadInstances() {
   try {
-    const raw = fs.readFileSync(INSTANCES_FILE, 'utf8');
+    const raw  = fs.readFileSync(INSTANCES_FILE, 'utf8');
     const list = JSON.parse(raw);
-    if (Array.isArray(list) && list.length > 0) return list;
+    if (Array.isArray(list) && list.length > 0) {
+      // Normalize: accept both `name` and `label` fields
+      return list.map(i => ({ ...i, name: i.name || i.label || 'AgentComms' }));
+    }
   } catch (_) {}
-  // Fallback: single default entry from env/CLI path
+  // Fallback: single default entry
   return [{ key: 'default', name: 'AgentComms', path: AGENTCOMMS_DEFAULT, builtin: true }];
 }
 
@@ -77,6 +82,27 @@ function instanceByKey(key) {
 
 function defaultInstance() {
   return loadInstances()[0];
+}
+
+// ─── Dispatcher Config ────────────────────────────────────────────────────────
+
+let dispatcherConfig = { jobId: '', openclawBin: 'openclaw', enabled: true };
+
+function loadDispatcherConfig() {
+  const inst       = defaultInstance();
+  const configPath = path.join(inst.path, 'config', 'dispatcher.json');
+  try {
+    const raw = fs.readFileSync(configPath, 'utf8');
+    dispatcherConfig = { ...dispatcherConfig, ...JSON.parse(raw) };
+    console.log(`Dispatcher config loaded from: ${configPath}`);
+    if (!dispatcherConfig.jobId) {
+      console.log('  Dispatcher: jobId empty — dispatcher endpoints will return unconfigured error');
+    } else {
+      console.log(`  Dispatcher: jobId=${dispatcherConfig.jobId}`);
+    }
+  } catch (_) {
+    console.log(`Dispatcher config not found at ${configPath} — dispatcher features disabled`);
+  }
 }
 
 // ─── Validation ───────────────────────────────────────────────────────────────
@@ -124,7 +150,13 @@ function validateInstancePath(instancePath) {
     }).length;
   } catch (_) {}
 
-  return { ok: true, version: version || null, agentCount, warning: versionWarning || undefined, resolvedPath: expanded };
+  return {
+    ok:          true,
+    version:     version || null,
+    agentCount,
+    warning:     versionWarning || undefined,
+    resolvedPath: expanded,
+  };
 }
 
 // ─── Mailbox ──────────────────────────────────────────────────────────────────
@@ -133,13 +165,13 @@ function parseMailbox(instancePath) {
   const mailboxFile = path.join(instancePath, 'MAILBOX.md');
   const content = safeReadFile(mailboxFile);
   if (!content) return null;
-  const idMatch   = content.match(/^mailbox-id:\s*(.+)/m);
-  const nameMatch = content.match(/^mailbox-name:\s*(.+)/m);
+  const idMatch      = content.match(/^mailbox-id:\s*(.+)/m);
+  const nameMatch    = content.match(/^mailbox-name:\s*(.+)/m);
   const createdMatch = content.match(/^created:\s*(.+)/m);
   if (!idMatch) return null;
   return {
     mailboxId:   idMatch[1].trim(),
-    mailboxName: nameMatch  ? nameMatch[1].trim()  : null,
+    mailboxName: nameMatch   ? nameMatch[1].trim()   : null,
     created:     createdMatch ? createdMatch[1].trim() : null,
   };
 }
@@ -153,16 +185,11 @@ function parseMembers(instancePath) {
   const members = [];
   const lines = content.split('\n');
   for (const line of lines) {
-    // Match table rows: | agent | joined | status |
     const m = line.match(/^\|\s*([^|]+?)\s*\|\s*([^|]*?)\s*\|\s*([^|]*?)\s*\|/);
     if (!m) continue;
     const agent = m[1].trim();
-    if (agent === 'Agent' || agent === '---' || agent === '-------' || /^-+$/.test(agent)) continue;
-    members.push({
-      agent:  agent,
-      joined: m[2].trim(),
-      status: m[3].trim(),
-    });
+    if (agent === 'Agent' || agent === '---' || /^-+$/.test(agent)) continue;
+    members.push({ agent: agent, joined: m[2].trim(), status: m[3].trim() });
   }
   return members;
 }
@@ -170,32 +197,22 @@ function parseMembers(instancePath) {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function safeReadDir(dirPath) {
-  try {
-    return fs.readdirSync(dirPath);
-  } catch (_) {
-    return [];
-  }
+  try { return fs.readdirSync(dirPath); }
+  catch (_) { return []; }
 }
 
 function safeStat(filePath) {
-  try {
-    return fs.statSync(filePath);
-  } catch (_) {
-    return null;
-  }
+  try { return fs.statSync(filePath); }
+  catch (_) { return null; }
 }
 
 function safeReadFile(filePath) {
-  try {
-    return fs.readFileSync(filePath, 'utf8');
-  } catch (_) {
-    return null;
-  }
+  try { return fs.readFileSync(filePath, 'utf8'); }
+  catch (_) { return null; }
 }
 
 function relativeTime(mtimeMs) {
-  const diffMs  = Date.now() - mtimeMs;
-  const diffSec = Math.floor(diffMs / 1000);
+  const diffSec = Math.floor((Date.now() - mtimeMs) / 1000);
   if (diffSec < 60)     return `${diffSec}s ago`;
   if (diffSec < 3600)   return `${Math.floor(diffSec / 60)}m ago`;
   if (diffSec < 86400)  return `${Math.floor(diffSec / 3600)}h ago`;
@@ -210,62 +227,51 @@ function latestMtime(dirPath) {
     if (!stat) return;
     if (stat.mtimeMs > latest) latest = stat.mtimeMs;
     if (stat.isDirectory()) {
-      for (const entry of safeReadDir(p)) {
-        walk(path.join(p, entry));
-      }
+      for (const entry of safeReadDir(p)) walk(path.join(p, entry));
     }
   }
   walk(dirPath);
   return latest;
 }
 
-function parseStatus(threadPath) {
-  const statusFile = path.join(threadPath, 'status.md');
-  const content    = safeReadFile(statusFile);
-  if (!content) return 'unknown';
-  const match = content.match(/^status:\s*(.+)/im);
-  return match ? match[1].trim().toLowerCase() : 'unknown';
-}
-
-function detectAgents(threadPath) {
-  const agents = new Set();
-  const files  = safeReadDir(threadPath);
-  for (const file of files) {
-    const content = safeReadFile(path.join(threadPath, file));
-    if (!content) continue;
-    const agentMatches = content.match(/\b(ac-dev|ac-orch|ac-pm|ac-design|stratty|archy|stacky|kanby|marky|example-agent|codey|righty|hairy|shorty|scouty|smarty|pixxy|desy|copy)\b/gi);
-    if (agentMatches) {
-      for (const a of agentMatches) agents.add(a.toLowerCase());
-    }
-    const fromMatch = content.match(/^From:\s*([^\n|→]+)/gim);
-    if (fromMatch) {
-      for (const m of fromMatch) {
-        const name = m.replace(/^From:\s*/i, '').trim().toLowerCase()
-          .replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
-        if (name) agents.add(name);
-      }
-    }
-  }
-  return Array.from(agents);
+function extractEmoji(str) {
+  const key = str.toLowerCase().trim();
+  if (AGENT_EMOJIS[key]) return AGENT_EMOJIS[key];
+  const match = str.match(/^([\p{Emoji_Presentation}\p{Emoji}\u200D\uFE0F]+)/u);
+  return match ? match[1] : '🤖';
 }
 
 // ─── Data Scanner ─────────────────────────────────────────────────────────────
 
 function scanAgentComms(instancePath) {
-  const root       = instancePath || AGENTCOMMS_DEFAULT;
+  const root       = instancePath || defaultInstance().path;
   const agentsDir  = path.join(root, 'agents');
   const threadsDir = path.join(root, 'threads');
   const archiveDir = path.join(root, 'archive');
 
-  const now     = Date.now();
+  const now      = Date.now();
   const sevenDays = 7 * 24 * 60 * 60 * 1000;
 
   // ── Parse mailbox identity ──
   const mailboxInfo = parseMailbox(root) || {};
 
+  // ── Mailbox closed check ──
+  const closedFile    = path.join(root, 'MAILBOX-CLOSED.md');
+  const mailboxClosed = !!safeStat(closedFile);
+  let closedInfo = null;
+  if (mailboxClosed) {
+    const content   = safeReadFile(closedFile);
+    const closedDate = (content && content.match(/^closed:\s*(.+)/im))
+      ? content.match(/^closed:\s*(.+)/im)[1].trim()
+      : '';
+    closedInfo = { closed: true, closedDate };
+  }
+
   // ── Parse members (for ghost/unregistered detection) ──
   const membersData = parseMembers(root);
-  const memberNames = membersData ? new Set(membersData.map(m => m.agent.toLowerCase())) : null;
+  const memberNames = membersData
+    ? new Set(membersData.map(m => m.agent.toLowerCase()))
+    : null;
 
   // ── Agents ──
   const agents = [];
@@ -280,6 +286,7 @@ function scanAgentComms(instancePath) {
     seenAgentFolders.add(agentName.toLowerCase());
 
     const inboxPath     = path.join(agentPath, 'inbox');
+    const outboxPath    = path.join(agentPath, 'outbox');
     const processedPath = path.join(inboxPath, 'processed');
 
     const allInbox = safeReadDir(inboxPath).filter(f =>
@@ -295,16 +302,22 @@ function scanAgentComms(instancePath) {
       f !== '.keep' && !f.startsWith('.')
     ).sort().reverse().slice(0, 8);
 
+    const outboxFiles = safeReadDir(outboxPath).filter(f =>
+      f !== '.keep' && !f.startsWith('.')
+    );
+
     const lastMtime = latestMtime(agentPath);
     const isActive  = lastMtime > (now - sevenDays) || inboxFiles.length > 0;
 
     const agentObj = {
       name:           agentName,
-      emoji:          AGENT_EMOJIS[agentName] || '🤖',
+      emoji:          AGENT_EMOJIS[agentName] || extractEmoji(agentName),
       inboxCount:     inboxFiles.length,
       inboxFiles,
       processedFiles,
       processedCount: safeReadDir(processedPath).filter(f => f !== '.keep' && !f.startsWith('.')).length,
+      outboxCount:    outboxFiles.length,
+      outboxFiles:    outboxFiles,
       lastMtime,
       lastActive:     lastMtime > 0 ? relativeTime(lastMtime) : 'never',
       isActive,
@@ -329,6 +342,8 @@ function scanAgentComms(instancePath) {
           inboxFiles:     [],
           processedFiles: [],
           processedCount: 0,
+          outboxCount:    0,
+          outboxFiles:    [],
           lastMtime:      0,
           lastActive:     'never',
           isActive:       false,
@@ -347,27 +362,29 @@ function scanAgentComms(instancePath) {
       const stat = safeStat(tp);
       if (!stat || !stat.isDirectory()) continue;
 
-      const rawStatus = parseStatus(tp);
-      const status    = zone === 'archive' && rawStatus === 'unknown' ? 'archived' : rawStatus;
+      // Detect "collection" threads: date-stamped subfolders
+      const topEntries = safeReadDir(tp);
+      const hasDateSubfolders = topEntries.some(f =>
+        /^\d{4}-\d{2}-\d{2}$/.test(f) && safeStat(path.join(tp, f)) && safeStat(path.join(tp, f)).isDirectory()
+      );
 
-      const files = safeReadDir(tp).filter(f => !f.startsWith('.')).map(f => {
-        const fp = path.join(tp, f);
-        const s  = safeStat(fp);
-        return { name: f, path: fp, mtime: s ? s.mtimeMs : 0 };
-      });
-
-      const lastMtime = latestMtime(tp);
-
-      threads.push({
-        slug,
-        zone,
-        status,
-        date:       slug.slice(0, 10),
-        files,
-        agents:     detectAgents(tp),
-        lastMtime,
-        lastActive: lastMtime > 0 ? relativeTime(lastMtime) : 'never',
-      });
+      if (hasDateSubfolders) {
+        // Treat each date subfolder as its own virtual thread
+        for (const dateSub of topEntries.filter(f =>
+          /^\d{4}-\d{2}-\d{2}$/.test(f) &&
+          safeStat(path.join(tp, f)) &&
+          safeStat(path.join(tp, f)).isDirectory()
+        )) {
+          const subPath    = path.join(tp, dateSub);
+          const virtualSlug = `${slug}/${dateSub}`;
+          const thread     = parseThread(subPath, virtualSlug, zone);
+          // Override title for collection threads
+          thread.title = `${slug.replace(/-/g, ' ')} — ${dateSub}`;
+          threads.push(thread);
+        }
+      } else {
+        threads.push(parseThread(tp, slug, zone));
+      }
     }
   }
 
@@ -384,30 +401,116 @@ function scanAgentComms(instancePath) {
     t.zone === 'archive' || t.status === 'done'
   ).length;
 
-  // ── Mailbox closed check ──
-  const closedFile  = path.join(instancePath, 'MAILBOX-CLOSED.md');
-  const mailboxClosed = safeStat(closedFile) ? true : false;
-  let closedInfo = null;
-  if (mailboxClosed) {
-    const content = safeReadFile(closedFile);
-    const closedDate = (content && content.match(/^closed:\s*(.+)/im)) ? content.match(/^closed:\s*(.+)/im)[1].trim() : '';
-    closedInfo = { closed: true, closedDate };
+  return {
+    agents,
+    threads,
+    stats: { activeAgents, inFlight, threadsOpen, archived },
+    mailbox: { ...mailboxInfo, ...(closedInfo || {}) },
+  };
+}
+
+function parseThread(threadPath, folder, zone) {
+  const files     = safeReadDir(threadPath).filter(f => !f.startsWith('.'));
+  let status      = zone === 'archive' ? 'archived' : 'unknown';
+  let summary     = '';
+  let title       = null;
+
+  // Read status.md if present
+  const statusFile   = path.join(threadPath, 'status.md');
+  const statusContent = safeReadFile(statusFile);
+  if (statusContent) {
+    const lower = statusContent.toLowerCase();
+    if      (lower.includes('done') || lower.includes('complete') || lower.includes('closed')) status = 'done';
+    else if (lower.includes('in-progress') || lower.includes('in progress')) status = 'in-progress';
+    else if (lower.includes('blocked'))  status = 'blocked';
+    else if (lower.includes('open'))     status = 'open';
+    else if (zone !== 'archive')         status = 'open';
+    // Summary: first 120 chars of status.md
+    summary = statusContent.split('\n').slice(0, 3).join(' ').substring(0, 120);
+    // Title: first h1 or first non-empty line from status.md
+    const firstLine = statusContent.split('\n').find(l => l.trim());
+    if (firstLine) title = firstLine.replace(/^#+\s*/, '').trim();
   }
 
-  return { agents, threads, stats: { activeAgents, inFlight, threadsOpen, archived }, mailbox: { ...mailboxInfo, ...closedInfo } };
+  // Read brief.md — use for title fallback and summary fallback
+  const briefFile    = path.join(threadPath, 'brief.md');
+  const briefContent = safeReadFile(briefFile);
+  if (briefContent) {
+    if (!summary) {
+      summary = briefContent.split('\n').find(l => l.trim()) || '';
+      summary = summary.replace(/^#+\s*/, '').substring(0, 120);
+    }
+    if (!title || title.startsWith('status:') || title.startsWith('#')) {
+      const briefLine = briefContent.split('\n').find(l => l.trim());
+      if (briefLine) title = briefLine.replace(/^#+\s*/, '').trim();
+    }
+  }
+
+  // Title fallback: slug with dashes replaced by spaces
+  if (!title) {
+    title = folder.replace(/^\d{4}-\d{2}-\d{2}_/, '').replace(/\//g, ' — ').replace(/-/g, ' ');
+  }
+
+  const lastMtime = latestMtime(threadPath);
+
+  // Build file objects with path and mtime
+  const fileObjects = files.filter(f =>
+    f.endsWith('.md') || f.endsWith('.png') || f.endsWith('.jpg') ||
+    f.endsWith('.jpeg') || f.endsWith('.gif') || f.endsWith('.webp') || f.endsWith('.svg')
+  ).map(f => {
+    const fp = path.join(threadPath, f);
+    const s  = safeStat(fp);
+    return { name: f, path: fp, mtime: s ? s.mtimeMs : 0 };
+  });
+
+  // Extract agents involved
+  const involvedAgents = extractAgentsFromThread(folder, files);
+
+  return {
+    slug:         folder,
+    zone,
+    status,
+    date:         folder.substring(0, 10),
+    title,
+    summary,
+    files:        fileObjects,
+    fileCount:    files.length,
+    agents:       involvedAgents,  // `agents` for frontend compatibility
+    involvedAgents,                // also expose as involvedAgents
+    lastMtime,
+    lastActive:   lastMtime > 0 ? relativeTime(lastMtime) : 'never',
+  };
+}
+
+function extractAgentsFromThread(folder, files) {
+  const knownAgents = Object.keys(AGENT_EMOJIS);
+  const found = new Set();
+  const text  = (folder + ' ' + (Array.isArray(files) ? files.join(' ') : '')).toLowerCase();
+  for (const agent of knownAgents) {
+    if (text.includes(agent)) found.add(agent);
+  }
+  return Array.from(found);
 }
 
 // ─── SSE Clients ──────────────────────────────────────────────────────────────
 
 const sseClients = new Set();
 
+// Broadcast to all clients (dispatcher events, instance changes)
+function broadcastAll(data) {
+  const msg = `data: ${JSON.stringify(data)}\n\n`;
+  for (const client of sseClients) {
+    try { client.res.write(msg); } catch (_) {}
+  }
+}
+
+// Broadcast data update to clients watching a specific instance
 function broadcastUpdate(instancePath) {
   if (sseClients.size === 0) return;
   try {
-    const data = JSON.stringify(scanAgentComms(instancePath));
-    const msg  = `data: ${data}\n\n`;
+    const data = scanAgentComms(instancePath);
+    const msg  = `data: ${JSON.stringify(data)}\n\n`;
     for (const client of sseClients) {
-      // Only broadcast to clients watching this instance
       if (!instancePath || client.instancePath === instancePath) {
         try { client.res.write(msg); } catch (_) {}
       }
@@ -429,7 +532,6 @@ function debouncedBroadcast(instancePath) {
 }
 
 function startWatcher(watchPath) {
-  // Close existing watcher
   if (activeWatcher) {
     try { activeWatcher.close(); } catch (_) {}
     activeWatcher = null;
@@ -456,7 +558,7 @@ function startWatcher(watchPath) {
       if (safeStat(subPath)) {
         try {
           fs.watch(subPath, { recursive: false }, () => debouncedBroadcast(watchPath));
-        } catch (_) {}
+        } catch (_2) {}
       }
     }
   }
@@ -465,10 +567,8 @@ function startWatcher(watchPath) {
 // ─── Path Security ────────────────────────────────────────────────────────────
 
 function isPathSafe(requestedPath) {
-  const resolved  = path.resolve(requestedPath);
-  const dashDir   = path.resolve(__dirname);
-
-  // Allow any path that's inside a known instance
+  const resolved = path.resolve(requestedPath);
+  const dashDir  = path.resolve(__dirname);
   const instances = loadInstances();
   for (const inst of instances) {
     const instResolved = path.resolve(inst.path);
@@ -476,7 +576,6 @@ function isPathSafe(requestedPath) {
       return true;
     }
   }
-  // Also allow dashboard files themselves
   return resolved.startsWith(dashDir + path.sep) || resolved === dashDir;
 }
 
@@ -494,12 +593,13 @@ function getMime(ext) {
     '.jpg':  'image/jpeg',
     '.jpeg': 'image/jpeg',
     '.gif':  'image/gif',
+    '.webp': 'image/webp',
     '.svg':  'image/svg+xml',
   };
   return map[ext] || 'application/octet-stream';
 }
 
-// ─── Body Reader ─────────────────────────────────────────────────────────────
+// ─── Body Reader ──────────────────────────────────────────────────────────────
 
 function readBody(req) {
   return new Promise((resolve, reject) => {
@@ -511,6 +611,92 @@ function readBody(req) {
     });
     req.on('error', reject);
   });
+}
+
+// ─── Dispatcher Control ───────────────────────────────────────────────────────
+
+function getDispatcherStatus() {
+  if (!dispatcherConfig.jobId) {
+    return { ok: false, error: 'Dispatcher not configured. Set jobId in config/dispatcher.json.' };
+  }
+  try {
+    const bin = dispatcherConfig.openclawBin || 'openclaw';
+    const out = execSync(`${bin} cron list --json`, { encoding: 'utf8', timeout: 5000 }).trim();
+    const parsed = JSON.parse(out);
+    const jobs   = parsed.jobs || (Array.isArray(parsed) ? parsed : []);
+    const job    = jobs.find(j =>
+      j.id === dispatcherConfig.jobId || j.name === 'agentcomms-dispatcher'
+    );
+    return {
+      ok:      true,
+      enabled: job ? job.enabled !== false : null,
+      jobId:   job ? job.id : dispatcherConfig.jobId,
+      status:  job ? (job.status || 'ok') : 'unknown',
+    };
+  } catch (e) {
+    return { ok: false, enabled: null, jobId: dispatcherConfig.jobId, status: 'error', error: e.message };
+  }
+}
+
+function setDispatcherEnabled(enable) {
+  if (!dispatcherConfig.jobId) {
+    return { ok: false, error: 'Dispatcher not configured. Set jobId in config/dispatcher.json.' };
+  }
+  const cmd = enable ? 'enable' : 'disable';
+  const bin = dispatcherConfig.openclawBin || 'openclaw';
+  try {
+    execSync(`${bin} cron ${cmd} ${dispatcherConfig.jobId}`, { encoding: 'utf8', timeout: 8000 });
+    return { ok: true, enabled: enable };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+}
+
+function wakeAgent(agentId) {
+  // Resolve inbox path: config/agent-dispatch.json → fallback to <root>/agents/<id>/inbox
+  const inst           = defaultInstance();
+  const dispatchPath   = path.join(inst.path, 'config', 'agent-dispatch.json');
+  let inboxPath        = `agents/${agentId}/inbox`;
+  let inboxAbsolute    = path.join(inst.path, 'agents', agentId, 'inbox');
+
+  if (fs.existsSync(dispatchPath)) {
+    try {
+      const dispatch = JSON.parse(fs.readFileSync(dispatchPath, 'utf8'));
+      const entry    = (dispatch.agents || []).find(a => a.id === agentId);
+      if (entry && entry.inboxPath) {
+        inboxPath     = entry.inboxPath;
+        inboxAbsolute = entry.inboxPath;
+      }
+    } catch (_) {}
+  }
+
+  const wakeMessage = [
+    `Check your AgentComms inbox at ${inboxAbsolute} for any new routing signals.`,
+    `If inbox is empty, reply NO_REPLY and stop.`,
+    `If there ARE new files: 1) Read the routing signal to find the thread folder.`,
+    `2) Read the brief.md in that thread folder for the full task.`,
+    `3) Complete the task as instructed.`,
+    `4) Update the thread's status.md to done.`,
+    `5) Move the inbox signal file to your processed/ folder.`,
+  ].join(' ');
+
+  try {
+    const gwPayload = JSON.stringify({
+      agentId,
+      task:    wakeMessage,
+      mode:    'run',
+      runtime: 'subagent',
+    });
+    const safePayload = gwPayload.replace(/'/g, "'\\''");
+    execSync(
+      `curl -s -X POST http://localhost:18789/api/sessions/spawn -H 'Content-Type: application/json' -d '${safePayload}'`,
+      { timeout: 8000 }
+    );
+    return { ok: true, message: `Wake signal sent to ${agentId}` };
+  } catch (e) {
+    // Degrade gracefully if Gateway is unreachable
+    return { ok: false, error: `Gateway unreachable or error: ${e.message}` };
+  }
 }
 
 // ─── Request Router ───────────────────────────────────────────────────────────
@@ -525,7 +711,7 @@ function handleRequest(req, res) {
   if (pathname === '/events') {
     const instanceKey  = urlObj.searchParams.get('instance') || defaultInstance().key;
     const inst         = instanceByKey(instanceKey);
-    const instancePath = inst ? inst.path : AGENTCOMMS_DEFAULT;
+    const instancePath = inst ? inst.path : defaultInstance().path;
 
     res.writeHead(200, {
       'Content-Type':  'text/event-stream',
@@ -538,7 +724,7 @@ function handleRequest(req, res) {
     sseClients.add(client);
 
     try {
-      const data     = scanAgentComms(instancePath);
+      const data = scanAgentComms(instancePath);
       res.write(`data: ${JSON.stringify(data)}\n\n`);
     } catch (err) {
       console.error('Initial SSE error:', err.message);
@@ -552,10 +738,10 @@ function handleRequest(req, res) {
   if (pathname === '/data') {
     const instanceKey  = urlObj.searchParams.get('instance') || defaultInstance().key;
     const inst         = instanceByKey(instanceKey);
-    const instancePath = inst ? inst.path : AGENTCOMMS_DEFAULT;
+    const instancePath = inst ? inst.path : defaultInstance().path;
     try {
-      const data       = scanAgentComms(instancePath);
-      data.instanceKey = instanceKey;
+      const data        = scanAgentComms(instancePath);
+      data.instanceKey  = instanceKey;
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
       res.end(JSON.stringify(data));
     } catch (err) {
@@ -588,6 +774,10 @@ function handleRequest(req, res) {
   if (pathname === '/instances/validate' && req.method === 'POST') {
     readBody(req).then(body => {
       const result = validateInstancePath(body.path || '');
+      if (result.ok && result.resolvedPath) {
+        const mailbox = parseMailbox(result.resolvedPath);
+        if (mailbox) result.mailbox = mailbox;
+      }
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
       res.end(JSON.stringify(result));
     }).catch(e => {
@@ -600,7 +790,7 @@ function handleRequest(req, res) {
   // ── Add instance ──
   if (pathname === '/instances/add' && req.method === 'POST') {
     readBody(req).then(body => {
-      const { key, name, path: instPath } = body;
+      const { key, name, path: instPath, mailboxId } = body;
       if (!key || !name || !instPath) {
         res.writeHead(400);
         res.end(JSON.stringify({ ok: false, error: 'key, name, and path are required' }));
@@ -618,7 +808,9 @@ function handleRequest(req, res) {
         res.end(JSON.stringify({ ok: false, error: `Key "${key}" already exists` }));
         return;
       }
-      list.push({ key, name, path: check.resolvedPath });
+      const entry = { key, name, path: check.resolvedPath };
+      if (mailboxId) entry.mailboxId = mailboxId;
+      list.push(entry);
       saveInstances(list);
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
       res.end(JSON.stringify({ ok: true, agentCount: check.agentCount, version: check.version, warning: check.warning }));
@@ -633,8 +825,8 @@ function handleRequest(req, res) {
   if (pathname === '/instances/remove' && req.method === 'POST') {
     readBody(req).then(body => {
       const { key } = body;
-      const list = loadInstances();
-      const inst = list.find(i => i.key === key);
+      const list    = loadInstances();
+      const inst    = list.find(i => i.key === key);
       if (!inst) {
         res.writeHead(404);
         res.end(JSON.stringify({ ok: false, error: 'Instance not found' }));
@@ -648,6 +840,7 @@ function handleRequest(req, res) {
       saveInstances(list.filter(i => i.key !== key));
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
       res.end(JSON.stringify({ ok: true }));
+      broadcastAll({ type: 'instances-changed' });
     }).catch(e => {
       res.writeHead(400);
       res.end(JSON.stringify({ ok: false, error: e.message }));
@@ -665,12 +858,11 @@ function handleRequest(req, res) {
         res.end(JSON.stringify({ ok: false, error: 'Instance not found' }));
         return;
       }
-      // Rewire the file watcher to the new instance path
       startWatcher(inst.path);
 
-      // Notify all SSE clients watching this instance to refresh
+      // Push fresh data to SSE clients watching this instance
       try {
-        const data     = scanAgentComms(inst.path);
+        const data       = scanAgentComms(inst.path);
         data.instanceKey = key;
         const msg = `data: ${JSON.stringify(data)}\n\n`;
         for (const client of sseClients) {
@@ -709,7 +901,7 @@ function handleRequest(req, res) {
         .sort()
         .map(f => ({ name: f, path: path.join(expanded, f) }));
 
-      const looksLikeAC = ['agents','threads','archive'].every(
+      const looksLikeAC = ['agents', 'threads', 'archive'].every(
         sub => !!safeStat(path.join(expanded, sub))
       );
 
@@ -756,6 +948,50 @@ function handleRequest(req, res) {
     return;
   }
 
+  // ── Dispatcher status ──
+  if (pathname === '/dispatcher/status') {
+    const status = getDispatcherStatus();
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify(status));
+    return;
+  }
+
+  // ── Dispatcher toggle ──
+  if (pathname === '/dispatcher/toggle' && req.method === 'POST') {
+    readBody(req).then(body => {
+      const result = setDispatcherEnabled(body.enable);
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify(result));
+      if (result.ok) {
+        // Broadcast to all SSE clients so every open tab updates
+        broadcastAll({ type: 'dispatcher', enabled: result.enabled });
+      }
+    }).catch(e => {
+      res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ ok: false, error: e.message }));
+    });
+    return;
+  }
+
+  // ── Dispatcher wake ──
+  if (pathname === '/dispatcher/wake' && req.method === 'POST') {
+    readBody(req).then(body => {
+      const { agentId } = body;
+      if (!agentId) {
+        res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ ok: false, error: 'agentId required' }));
+        return;
+      }
+      const result = wakeAgent(agentId);
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify(result));
+    }).catch(e => {
+      res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ ok: false, error: e.message }));
+    });
+    return;
+  }
+
   // ── Shutdown ──
   if (pathname === '/shutdown' && req.method === 'POST') {
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
@@ -768,7 +1004,7 @@ function handleRequest(req, res) {
   // ── Index ──
   if (pathname === '/' || pathname === '/index.html') {
     const indexPath = path.join(__dirname, 'index.html');
-    const stat = safeStat(indexPath);
+    const stat      = safeStat(indexPath);
     if (!stat || !stat.isFile()) {
       res.writeHead(404);
       res.end('index.html not found');
@@ -779,18 +1015,20 @@ function handleRequest(req, res) {
     return;
   }
 
-  // 404
+  // ── 404 ──
   res.writeHead(404);
   res.end('Not found');
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
+// Load dispatcher config at startup
+loadDispatcherConfig();
+
 const port = parseInt(process.env.AGENTCOMMS_PORT || process.argv[2], 10) || DEFAULT_PORT;
 
-// Start watching the default instance
 const defaultInst = defaultInstance();
-const acStat = safeStat(defaultInst.path);
+const acStat      = safeStat(defaultInst.path);
 if (!acStat || !acStat.isDirectory()) {
   console.warn(`Warning: AgentComms path not found: ${defaultInst.path}`);
   console.warn('Dashboard will load with empty data.');
@@ -810,6 +1048,6 @@ server.on('error', (err) => {
 });
 
 server.listen(port, '127.0.0.1', () => {
-  console.log(`AgentComms Dashboard: http://localhost:${port}`);
+  console.log(`AgentComms Dashboard v0.8: http://localhost:${port}`);
   console.log(`Default instance: ${defaultInst.path}`);
 });
