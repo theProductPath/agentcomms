@@ -93,7 +93,10 @@ function loadDispatcherConfig() {
   const configPath = path.join(inst.path, 'config', 'dispatcher.json');
   try {
     const raw = fs.readFileSync(configPath, 'utf8');
-    dispatcherConfig = { ...dispatcherConfig, ...JSON.parse(raw) };
+    const parsed = JSON.parse(raw);
+    // Accept cronJobId as alias for jobId (for compatibility)
+    if (parsed.cronJobId && !parsed.jobId) parsed.jobId = parsed.cronJobId;
+    dispatcherConfig = { ...dispatcherConfig, ...parsed };
     console.log(`Dispatcher config loaded from: ${configPath}`);
     if (!dispatcherConfig.jobId) {
       console.log('  Dispatcher: jobId empty — dispatcher endpoints will return unconfigured error');
