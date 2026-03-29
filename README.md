@@ -53,6 +53,24 @@ bash ~/path/to/agentcomms/setup.sh --path ~/my-team/AgentComms --team "my-team"
 
 ---
 
+## The Setup → Use → Reset Loop
+
+When you first run `setup.sh`, your AgentComms instance comes pre-loaded with an example Research & Write team and a completed mission so you can see what a full run looks like — three agents, a real task, and the full artifact trail.
+
+When you're ready to start fresh with your own team:
+
+```bash
+# Wipe everything and start clean
+bash AgentComms/scripts/reset.sh
+
+# Or restore the example content at any time
+bash AgentComms/scripts/reset.sh --example
+```
+
+To add your own agents, see [Adding an Agent](#adding-an-agent).
+
+---
+
 ## Folder Structure
 
 ```
