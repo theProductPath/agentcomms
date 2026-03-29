@@ -966,6 +966,14 @@ function handleNewData(data) {
 function render() {
   renderClosedBanner();
   renderStats();
+  // Clear stale selections if the agent/thread no longer exists in state
+  if (selectedAgent && !state.agents.find(a => a.name === selectedAgent)) {
+    closeInboxPanel();
+  }
+  if (selectedThread && !state.threads.find(t => t.slug === selectedThread)) {
+    selectedThread = null;
+    document.getElementById('thread-shelf').classList.remove('open');
+  }
   renderAgents();
   renderThreads();
   if (currentView === 'map') drawMap();
