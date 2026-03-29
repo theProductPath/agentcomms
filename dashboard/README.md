@@ -133,6 +133,59 @@ The dashboard supports multiple AgentComms instances via the instance dropdown i
 
 ---
 
+---
+
+## Dispatcher Configuration
+
+The dashboard includes a **Dispatcher toggle** in the header — a pill that shows whether the `agentcomms-dispatcher` cron job is currently enabled or disabled. Click it to toggle.
+
+### Setup
+
+1. Create `config/dispatcher.json` in your AgentComms root (setup.sh does this automatically):
+
+```json
+{
+  "jobId": "",
+  "openclawBin": "openclaw",
+  "enabled": true
+}
+```
+
+2. Find your cron job ID:
+```bash
+openclaw cron list
+```
+
+3. Set `jobId` to the ID shown for your `agentcomms-dispatcher` job.
+
+4. Restart the dashboard server.
+
+### Fields
+
+| Field | Description |
+|---|---|
+| `jobId` | OpenClaw cron job ID for the agentcomms-dispatcher job. Leave empty to disable dispatcher features. |
+| `openclawBin` | Path or command for the openclaw CLI. Default: `openclaw` (assumes it's in your PATH). Override if needed (e.g. `"/usr/local/bin/openclaw"`). |
+| `enabled` | Unused by server — the actual enabled state comes from openclaw's cron registry. |
+
+### Pill States
+
+| Pill | Meaning |
+|---|---|
+| `● Dispatcher ON` (green) | Cron job is currently enabled |
+| `○ Dispatcher OFF` (red) | Cron job is currently disabled |
+| `Dispatcher ?` (gray) | jobId not configured, or openclaw CLI unreachable |
+
+Click the green or red pill to toggle the dispatcher. Gray pill is non-interactive.
+
+### Agent Wake ▶
+
+Each agent card shows a **▶ Wake** button when the agent has unread inbox items. Clicking it sends a wake signal to the agent via the Gateway REST API, telling them to check their inbox.
+
+The button is disabled (greyed out) when the agent's inbox is empty. If the Gateway is unreachable, the button shows an inline error.
+
+---
+
 ## Empty State
 
 A new or empty AgentComms instance loads without errors. Stats show 0, panels show "No active agents" and "No threads yet." The live indicator shows green (connected).
