@@ -1153,11 +1153,11 @@ function renderThreads() {
 
   threads.sort((a, b) => {
     let va, vb;
-    if (sortKey === 'date')   { va = a.date;      vb = b.date; }
-    else if (sortKey === 'status') { va = a.status; vb = b.status; }
-    else                      { va = a.lastMtime; vb = b.lastMtime; }
-    if (va < vb) return sortDir;
-    if (va > vb) return -sortDir;
+    if (sortKey === 'date')        { va = a.date;       vb = b.date; }
+    else if (sortKey === 'status') { va = a.status;     vb = b.status; }
+    else                           { va = a.lastMtime;  vb = b.lastMtime; }
+    if (va < vb) return -sortDir;
+    if (va > vb) return sortDir;
     return 0;
   });
 
