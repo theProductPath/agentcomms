@@ -597,6 +597,25 @@
   </div>
 </div>
 
+<!-- Folder browser modal -->
+<div id="folder-browser-modal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.65);align-items:center;justify-content:center;">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;width:500px;max-width:94vw;max-height:70vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.6);">
+    <div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0;">
+      <div style="font-weight:600;font-size:13px;flex:1;">Browse for Folder</div>
+      <button onclick="closeFolderBrowser()" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:20px;line-height:1;">×</button>
+    </div>
+    <div style="padding:8px 14px;border-bottom:1px solid var(--border);font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px;flex-shrink:0;">
+      <button onclick="browseTo('..')" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:14px;line-height:1;padding:2px 6px;border-radius:3px;" title="Up">↑</button>
+      <span id="browser-current-path" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:monospace;font-size:11px;"></span>
+    </div>
+    <div id="browser-entries" style="overflow-y:auto;flex:1;padding:6px;"></div>
+    <div style="padding:10px 14px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;flex-shrink:0;">
+      <button class="btn-secondary" onclick="closeFolderBrowser()">Cancel</button>
+      <button class="btn-primary" id="browser-select-btn" onclick="selectBrowserFolder()">Select This Folder</button>
+    </div>
+  </div>
+</div>
+
 <!-- File expand modal -->
 <div id="file-modal">
   <div id="file-modal-inner">
@@ -620,10 +639,7 @@
         <div class="form-label">Folder Path</div>
         <div class="form-row">
           <input class="form-input" id="add-inst-path" type="text" placeholder="/path/to/your/AgentComms" oninput="onAddInstFieldChange()" />
-          <label class="btn-secondary folder-browse-btn" title="Browse for folder">
-            📁
-            <input type="file" id="add-inst-browse" webkitdirectory style="display:none" onchange="onFolderBrowse(this)" />
-          </label>
+          <button class="btn-secondary folder-browse-btn" type="button" title="Browse for folder" onclick="openFolderBrowser()">📁</button>
           <button class="btn-secondary" id="validate-btn" onclick="validateInstancePath()">Validate</button>
         </div>
       </div>
@@ -759,25 +775,61 @@ function closeAddInstanceModal() {
   document.getElementById('add-instance-modal').classList.remove('open');
 }
 
-function onFolderBrowse(input) {
-  // Extract the folder path from the selected files
-  if (!input.files || input.files.length === 0) return;
-  const firstFile = input.files[0];
-  // webkitRelativePath gives "FolderName/file.ext" — strip the filename
-  const relPath = firstFile.webkitRelativePath || '';
-  const folder  = relPath.split('/')[0];
-  // Build the full path using the file's path minus the relative tail
-  let fullPath = firstFile.path || '';
-  if (fullPath) {
-    // Node/Electron-style: file.path is absolute
-    const suffix = firstFile.webkitRelativePath;
-    fullPath = fullPath.slice(0, fullPath.length - suffix.length - 1);
-  } else {
-    // Fallback: just show the folder name
-    fullPath = folder;
+let browserCurrentPath = '';
+
+function openFolderBrowser() {
+  const startPath = document.getElementById('add-inst-path').value.trim() || '~';
+  const modal = document.getElementById('folder-browser-modal');
+  modal.style.display = 'flex';
+  browseTo(startPath);
+}
+
+function closeFolderBrowser() {
+  document.getElementById('folder-browser-modal').style.display = 'none';
+}
+
+async function browseTo(p) {
+  // Resolve relative '..' against current path
+  if (p === '..' && browserCurrentPath) {
+    const parts = browserCurrentPath.split('/').filter(Boolean);
+    parts.pop();
+    p = parts.length ? '/' + parts.join('/') : '/';
   }
-  document.getElementById('add-inst-path').value = fullPath;
-  // Reset validation and auto-validate
+  try {
+    const res  = await fetch(`/browse?path=${encodeURIComponent(p)}`);
+    const data = await res.json();
+    browserCurrentPath = data.current || p;
+    document.getElementById('browser-current-path').textContent = browserCurrentPath;
+    const entries = document.getElementById('browser-entries');
+    if (!data.entries || data.entries.length === 0) {
+      entries.innerHTML = '<div style="padding:12px 8px;color:var(--muted);font-size:12px;">No subdirectories</div>';
+    } else {
+      entries.innerHTML = data.entries.map(e =>
+        `<div onclick="browseTo('${escStr(e.path)}')" style="padding:7px 10px;border-radius:4px;cursor:pointer;font-size:12px;display:flex;align-items:center;gap:8px;" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
+          <span style="color:var(--muted)">📁</span>
+          <span>${escHtml(e.name)}</span>
+          ${data.looksLikeAC ? '' : ''}
+        </div>`
+      ).join('');
+    }
+    // Highlight if current path looks like an AgentComms folder
+    const btn = document.getElementById('browser-select-btn');
+    if (data.looksLikeAC) {
+      btn.textContent = '✓ Select This Folder (AgentComms detected)';
+      btn.style.background = 'var(--green)';
+    } else {
+      btn.textContent = 'Select This Folder';
+      btn.style.background = '';
+    }
+  } catch (e) {
+    document.getElementById('browser-entries').innerHTML =
+      `<div style="padding:12px 8px;color:var(--red);font-size:12px;">Error: ${escHtml(e.message)}</div>`;
+  }
+}
+
+function selectBrowserFolder() {
+  document.getElementById('add-inst-path').value = browserCurrentPath;
+  closeFolderBrowser();
   validatedPath = null;
   updateAddSubmitBtn();
   validateInstancePath();
