@@ -54,13 +54,22 @@ echo ""
 # ─── Step 1: Prerequisites ────────────────────────────────────────────────────
 step "Step 1 — Checking prerequisites"
 
-# Check openclaw
+# Check openclaw — hard requirement
 if command -v openclaw >/dev/null 2>&1; then
   ok "openclaw found: $(which openclaw)"
 else
-  warn "openclaw not found in PATH."
-  warn "Agents will be set up in AgentComms but OpenClaw sessions won't fire automatically."
-  warn "You can still run wake.sh to deliver inbox signals and start sessions manually."
+  echo "" >&2
+  echo "✗ OpenClaw is required to run this demo." >&2
+  echo "" >&2
+  echo "  This demo uses OpenClaw to register agents and fire sessions." >&2
+  echo "  Without it, agents can receive signals but won't activate." >&2
+  echo "" >&2
+  echo "  Install OpenClaw: https://openclaw.ai" >&2
+  echo "" >&2
+  echo "  Once installed, re-run:" >&2
+  echo "    bash implementations/openclaw/run-demo.sh --agentcomms-root $AC_ROOT" >&2
+  echo "" >&2
+  exit 1
 fi
 
 # Resolve AgentComms root
@@ -141,7 +150,7 @@ ASH_INBOX="$AC_ROOT/agents/ash/inbox"
 step "Step 4 — Creating mission thread"
 
 TODAY="$(date +%Y-%m-%d)"
-THREAD_SLUG="${TODAY}_agentcomms-research-mission"
+THREAD_SLUG="${TODAY}_software-project-research-mission"
 THREAD_DIR="$AC_ROOT/threads/$THREAD_SLUG"
 
 if [[ -d "$THREAD_DIR" ]]; then
@@ -151,34 +160,27 @@ else
 
   # Write brief.md
   cat > "$THREAD_DIR/brief.md" << 'BRIEF_EOF'
-# Mission Brief — AgentComms Competitive Research & Positioning
+# Mission Brief — Software Project Research & Write
 
-## What
+## Mission
 
-Research the AgentComms competitive landscape and produce a positioning memo.
-
-Specifically:
-- What tools or approaches exist for agent-to-agent communication and coordination?
-- What makes AgentComms distinct?
-- What's the strongest positioning claim we can make?
-
-## Why
-
-AgentComms is entering a market where a few other approaches exist (LangGraph, CrewAI, AutoGen, Google A2A, Anthropic MCP, etc.). We need a clear, defensible positioning statement that operators and evaluators will immediately understand and find credible.
+What are the three most important things to consider when starting a new software project?
 
 ## Team
 
-- **Jin** handles research — produces `jin-research-summary.md` with 3 key considerations
-- **Ash** handles writing — produces `ash-memo.md`, a polished one-page positioning memo
-- **Vera** (you) coordinates, reviews, and closes
+- **Jin** handles research — produces `jin-research-summary.md` with 3 structured considerations and supporting rationale
+- **Ash** handles writing — produces `ash-memo.md`, a polished one-page memo suitable for a technical audience
+- **Vera** (you) coordinates, reviews, and closes the thread
 
 ## Deliverable
 
-A polished positioning memo in this thread folder as `ash-memo.md`, with your synthesis in `result.md`.
+A polished one-page memo in this thread folder as `ash-memo.md`, with your synthesis and sign-off in `result.md`.
 
 ## Done When
 
-- `result.md` exists in this thread folder
+- `jin-research-summary.md` exists (Jin's research)
+- `ash-memo.md` exists (Ash's finished memo)
+- `result.md` exists with your synthesis
 - `status.md` is `done`
 - This thread has been moved from `threads/` to `archive/`
 BRIEF_EOF
