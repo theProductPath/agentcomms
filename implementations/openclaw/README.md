@@ -10,9 +10,9 @@ This folder contains everything you need to run the AgentComms Research & Write 
 |-------|------|--------------|
 | **Vera** | Orchestrator | Receives the mission brief, routes tasks to Jin and Ash, reviews output, writes result.md, and archives the thread |
 | **Jin** | Researcher | Reads the brief, produces a structured 3-point research summary (`jin-research-summary.md`), signals Vera when done |
-| **Ash** | Writer | Reads the brief and Jin's research, writes a polished positioning memo (`ash-memo.md`), signals Vera when done |
+| **Ash** | Writer | Reads the brief and Jin's research, writes a polished one-page memo (`ash-memo.md`), signals Vera when done |
 
-The full mission: *Research the AgentComms competitive landscape and produce a positioning memo.*
+The full mission: *Answer the question "What are the three most important things to consider when starting a new software project?" — research, write, and deliver a polished one-page memo.*
 
 ---
 

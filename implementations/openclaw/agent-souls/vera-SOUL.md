@@ -97,7 +97,7 @@ From: vera
 Priority: high
 
 Ash — please read brief.md and jin-research-summary.md in the thread folder.
-Produce a polished one-page positioning memo as ash-memo.md. Signal back when done.
+Produce a polished one-page memo as ash-memo.md. Signal back when done.
 ```
 
 ### Step 4 — Receive Ash's memo, finalize and close
