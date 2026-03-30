@@ -598,7 +598,7 @@
 </div>
 
 <!-- Folder browser modal -->
-<div id="folder-browser-modal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.65);align-items:center;justify-content:center;">
+<div id="folder-browser-modal" style="display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.65);align-items:center;justify-content:center;">
   <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;width:500px;max-width:94vw;max-height:70vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.6);">
     <div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0;">
       <div style="font-weight:600;font-size:13px;flex:1;">Browse for Folder</div>
@@ -1315,7 +1315,11 @@ function closeFileModal() {
 
 document.addEventListener('click', (e) => {
   if (e.target === document.getElementById('file-modal')) closeFileModal();
-  if (e.target === document.getElementById('add-instance-modal')) closeAddInstanceModal();
+  // Only close add-instance modal on backdrop click if folder browser is not open
+  if (e.target === document.getElementById('add-instance-modal') &&
+      document.getElementById('folder-browser-modal').style.display === 'none') {
+    closeAddInstanceModal();
+  }
 });
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') { closeFileModal(); closeAddInstanceModal(); }
