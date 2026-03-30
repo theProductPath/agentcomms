@@ -98,31 +98,31 @@ ok "add-agent.sh: $ADD_AGENT_SCRIPT"
 # ─── Detect model ─────────────────────────────────────────────────────────────
 section "Detecting model"
 
-OPENCLAW_AVAILABLE=false
 MODEL=""
+
+# Check OpenClaw availability first — independent of model detection
+if command -v openclaw >/dev/null 2>&1; then
+  OPENCLAW_AVAILABLE=true
+else
+  OPENCLAW_AVAILABLE=false
+  warn "openclaw not found in PATH."
+  warn "AgentComms inboxes will be created, but agents won't be registered in OpenClaw."
+  warn "wake.sh will deliver signals to inboxes, but sessions won't auto-fire."
+fi
 
 if [[ -n "$MODEL_OVERRIDE" ]]; then
   MODEL="$MODEL_OVERRIDE"
   ok "Using model: $MODEL (from --model flag)"
-else
-  if command -v openclaw >/dev/null 2>&1; then
-    OPENCLAW_AVAILABLE=true
-    info "openclaw found — detecting default agent model..."
-    DETECTED_MODEL=$(openclaw agents list 2>/dev/null | grep -A5 "(default)" | grep "Model:" | sed 's/.*Model: //' | tr -d ' ' || true)
-    if [[ -n "$DETECTED_MODEL" ]]; then
-      MODEL="$DETECTED_MODEL"
-      ok "Using model: $MODEL (from your default OpenClaw agent)"
-    else
-      warn "openclaw found but no default model detected."
-      warn "Pass --model <id> to set the model, or agents will be registered without one."
-      warn "Example: --model anthropic/claude-haiku-4-5"
-      MODEL=""
-    fi
+elif [[ "$OPENCLAW_AVAILABLE" == "true" ]]; then
+  info "openclaw found — detecting default agent model..."
+  DETECTED_MODEL=$(openclaw agents list 2>/dev/null | grep -A5 "(default)" | grep "Model:" | sed 's/.*Model: //' | tr -d ' ' || true)
+  if [[ -n "$DETECTED_MODEL" ]]; then
+    MODEL="$DETECTED_MODEL"
+    ok "Using model: $MODEL (from your default OpenClaw agent)"
   else
-    warn "openclaw not found in PATH."
-    warn "AgentComms inboxes will be created, but agents won't be registered in OpenClaw."
-    warn "wake.sh will deliver signals to inboxes, but sessions won't auto-fire."
-    OPENCLAW_AVAILABLE=false
+    warn "openclaw found but no default model detected."
+    warn "Pass --model <id> to set the model, or agents will be registered without one."
+    warn "Example: --model anthropic/claude-haiku-4-5"
     MODEL=""
   fi
 fi
