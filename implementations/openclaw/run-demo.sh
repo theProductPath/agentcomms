@@ -312,8 +312,9 @@ if [[ -f "$AC_ROOT/dashboard/start.sh" ]]; then
   echo ""
 fi
 if [[ -f "$AC_ROOT/scripts/reset.sh" ]]; then
-  echo "   To reset when done:"
-  echo "     bash $AC_ROOT/scripts/reset.sh"
+  echo "   To clean up when done (run both):"
+  echo "     bash $SCRIPT_DIR/teardown-demo.sh   # removes vera/jin/ash from OpenClaw"
+  echo "     bash $AC_ROOT/scripts/reset.sh       # wipes AgentComms inboxes and threads"
   echo ""
 fi
 echo "══════════════════════════════════════════════════════"
