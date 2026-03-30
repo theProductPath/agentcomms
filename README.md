@@ -55,7 +55,7 @@ bash ~/path/to/agentcomms/setup.sh --path ~/my-team/AgentComms --team "my-team"
 
 ## The Setup → Use → Reset Loop
 
-When you first run `setup.sh`, your AgentComms instance comes pre-loaded with an example Research & Write team and a completed mission so you can see what a full run looks like — three agents, a real task, and the full artifact trail.
+When you first run `setup.sh`, your AgentComms instance comes with a single `example-agent` — one agent with a couple of inbox signals and an active thread. It's enough to see how the dashboard works and get a feel for the protocol without any noise.
 
 When you're ready to start fresh with your own team:
 
@@ -63,11 +63,21 @@ When you're ready to start fresh with your own team:
 # Wipe everything and start clean
 bash AgentComms/scripts/reset.sh
 
-# Or restore the example content at any time
+# Or restore the example agent at any time
 bash AgentComms/scripts/reset.sh --example
 ```
 
 To add your own agents, see [Adding an Agent](#adding-an-agent).
+
+### Want to see a full multi-agent run?
+
+If you're running AgentComms with OpenClaw, there's a live demo in `implementations/openclaw/` — a three-agent Research & Write team (Vera, Jin, and Ash) that you can activate and watch run end-to-end:
+
+```bash
+bash implementations/openclaw/run-demo.sh
+```
+
+See [`implementations/openclaw/README.md`](./implementations/openclaw/README.md) for what it does and what you need set up first.
 
 ---
 
