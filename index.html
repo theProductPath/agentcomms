@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    /* ─── DESIGN TOKENS ───────────────────────────────────── */
+    /* ─── DESIGN TOKENS — The Sibling ───────────────────── */
     :root {
       --color-bg: #181d26;
       --color-surface: #222831;
@@ -50,7 +50,9 @@
 
     /* ─── RESET & BASE ───────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     html { scroll-behavior: smooth; }
+
     body {
       font-family: var(--font-sans);
       background: var(--color-bg);
@@ -59,205 +61,611 @@
       line-height: 1.6;
       -webkit-font-smoothing: antialiased;
     }
+
     a { color: var(--color-primary-text); text-decoration: none; }
     a:hover { color: var(--color-primary); }
 
     /* ─── LAYOUT ─────────────────────────────────────────── */
-    .container { max-width: 860px; margin: 0 auto; padding: 0 var(--space-6); }
-    .container--wide { max-width: 1040px; margin: 0 auto; padding: 0 var(--space-6); }
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 var(--space-6);
+    }
+
+    .container--wide {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 0 var(--space-6);
+    }
 
     /* ─── NAV ─────────────────────────────────────────────── */
     nav {
       border-bottom: 1px solid var(--color-border);
       background: var(--color-surface);
-      position: sticky; top: 0; z-index: 100;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
+
     .nav-inner {
-      display: flex; align-items: center; justify-content: space-between;
-      height: 56px; max-width: 1040px; margin: 0 auto; padding: 0 var(--space-6);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 56px;
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 0 var(--space-6);
     }
-    .nav-brand { display: flex; align-items: baseline; gap: var(--space-3); }
-    .nav-wordmark { font-size: 15px; font-weight: 700; color: var(--color-text); letter-spacing: -0.01em; }
-    .nav-wordmark span { color: var(--color-primary); }
-    .nav-by { font-size: 11px; color: var(--color-text-muted); letter-spacing: 0.02em; }
-    .nav-by a { color: var(--color-text-muted); }
-    .nav-by a:hover { color: var(--color-text); }
-    .nav-link { font-size: 13px; font-weight: 500; color: var(--color-text-muted); transition: color 150ms ease; }
+
+    .nav-brand {
+      display: flex;
+      align-items: baseline;
+      gap: var(--space-3);
+    }
+
+    .nav-wordmark {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--color-text);
+      letter-spacing: -0.01em;
+    }
+
+    .nav-wordmark span {
+      color: var(--color-primary);
+    }
+
+    .nav-by {
+      font-size: 11px;
+      color: var(--color-text-muted);
+      letter-spacing: 0.02em;
+    }
+
+    .nav-by a {
+      color: var(--color-text-muted);
+    }
+
+    .nav-by a:hover {
+      color: var(--color-text);
+    }
+
+    .nav-link {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-text-muted);
+      transition: color 150ms ease;
+    }
+
     .nav-link:hover { color: var(--color-text); }
 
     /* ─── HERO ───────────────────────────────────────────── */
-    .hero { padding: var(--space-24) 0 var(--space-16); text-align: center; }
+    .hero {
+      padding: var(--space-24) 0 var(--space-16);
+      text-align: center;
+    }
+
     .hero-eyebrow {
-      display: inline-block; font-size: 11px; font-weight: 600;
-      letter-spacing: 0.1em; text-transform: uppercase;
-      color: var(--color-primary-text); margin-bottom: var(--space-5);
-      padding: 3px 10px; border: 1px solid rgba(199,92,42,0.3);
-      border-radius: var(--radius-full); background: var(--color-primary-subtle);
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--color-primary-text);
+      margin-bottom: var(--space-5);
+      padding: 3px 10px;
+      border: 1px solid rgba(199,92,42,0.3);
+      border-radius: var(--radius-full);
+      background: var(--color-primary-subtle);
     }
+
     .hero-headline {
-      font-size: clamp(2rem, 5vw, 3rem); font-weight: 700;
-      letter-spacing: -0.02em; color: var(--color-text); line-height: 1.15;
-      margin-bottom: var(--space-5); max-width: 700px; margin-left: auto; margin-right: auto;
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--color-text);
+      line-height: 1.15;
+      margin-bottom: var(--space-5);
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
     }
+
     .hero-subhead {
-      font-size: 17px; color: var(--color-text-muted);
-      max-width: 540px; margin: 0 auto var(--space-10); line-height: 1.6;
+      font-size: 17px;
+      color: var(--color-text-muted);
+      max-width: 540px;
+      margin: 0 auto var(--space-10);
+      line-height: 1.6;
     }
-    .hero-subhead strong { color: var(--color-text); font-weight: 500; }
+
+    .hero-subhead strong {
+      color: var(--color-text);
+      font-weight: 500;
+    }
+
     .hero-ctas {
-      display: flex; gap: var(--space-4); justify-content: center;
-      flex-wrap: wrap; margin-bottom: var(--space-16);
+      display: flex;
+      gap: var(--space-4);
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: var(--space-16);
     }
-    .hero-image {
-      max-width: 760px; margin: 0 auto;
-      border-radius: var(--radius-xl); border: 1px solid var(--color-border);
-      overflow: hidden; box-shadow: var(--shadow-lg);
+
+    /* ─── HERO IMAGE PLACEHOLDER ─────────────────────────── */
+    /* Pixxy: replace this block with the hero image */
+    .hero-image-placeholder {
+      max-width: 760px;
+      margin: 0 auto;
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--color-border);
+      background: var(--color-card);
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+      aspect-ratio: 16/9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    .hero-image img { width: 100%; display: block; border-radius: var(--radius-xl); }
+
+    .hero-image-placeholder img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      border-radius: var(--radius-xl);
+    }
+
+    /* Shown only while placeholder is active — remove with the img */
+    .hero-placeholder-label {
+      text-align: center;
+      color: var(--color-text-disabled);
+      font-size: 13px;
+    }
+
+    .hero-placeholder-label .ph-icon {
+      font-size: 32px;
+      display: block;
+      margin-bottom: var(--space-3);
+      opacity: 0.4;
+    }
 
     /* ─── BUTTONS ────────────────────────────────────────── */
     .btn {
-      display: inline-flex; align-items: center; gap: var(--space-2);
-      font-family: var(--font-sans); font-size: 14px; font-weight: 600;
-      border-radius: var(--radius-md); padding: 10px 20px;
-      cursor: pointer; border: none; text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: var(--radius-md);
+      padding: 10px 20px;
+      cursor: pointer;
+      border: none;
+      text-decoration: none;
       transition: background 150ms ease, box-shadow 150ms ease, transform 150ms ease;
     }
+
     .btn:active { transform: scale(0.98); }
-    .btn-primary { background: var(--color-primary); color: var(--color-text-on-primary); }
-    .btn-primary:hover { background: var(--color-primary-hover); box-shadow: var(--shadow-primary); color: var(--color-text-on-primary); }
-    .btn-ghost { background: transparent; color: var(--color-text); border: 1px solid var(--color-border-strong); }
-    .btn-ghost:hover { background: var(--color-card-hover); border-color: var(--color-primary); color: var(--color-text); }
+
+    .btn-primary {
+      background: var(--color-primary);
+      color: var(--color-text-on-primary);
+    }
+
+    .btn-primary:hover {
+      background: var(--color-primary-hover);
+      box-shadow: var(--shadow-primary);
+      color: var(--color-text-on-primary);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--color-text);
+      border: 1px solid var(--color-border-strong);
+    }
+
+    .btn-ghost:hover {
+      background: var(--color-card-hover);
+      border-color: var(--color-primary);
+      color: var(--color-text);
+    }
 
     /* ─── SECTION CHROME ─────────────────────────────────── */
-    section { padding: var(--space-20) 0; }
-    .section-divider { border: none; border-top: 1px solid var(--color-border); }
-    .section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-primary-text); margin-bottom: var(--space-4); }
-    .section-heading { font-size: clamp(1.4rem, 3vw, 1.9rem); font-weight: 700; letter-spacing: -0.01em; color: var(--color-text); line-height: 1.25; margin-bottom: var(--space-5); }
-    .section-body { font-size: 16px; color: var(--color-text-muted); line-height: 1.75; max-width: 600px; }
+    section {
+      padding: var(--space-20) 0;
+    }
+
+    .section-divider {
+      border: none;
+      border-top: 1px solid var(--color-border);
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--color-primary-text);
+      margin-bottom: var(--space-4);
+    }
+
+    .section-heading {
+      font-size: clamp(1.4rem, 3vw, 1.9rem);
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--color-text);
+      line-height: 1.25;
+      margin-bottom: var(--space-5);
+    }
+
+    .section-body {
+      font-size: 16px;
+      color: var(--color-text-muted);
+      line-height: 1.75;
+      max-width: 600px;
+    }
+
     .section-body p + p { margin-top: var(--space-4); }
-    .section-body strong { color: var(--color-text); font-weight: 500; }
+
+    .section-body strong {
+      color: var(--color-text);
+      font-weight: 500;
+    }
 
     /* ─── PROBLEM SECTION ────────────────────────────────── */
-    .problem { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-16); align-items: center; }
-    @media (max-width: 640px) { .problem { grid-template-columns: 1fr; } }
-    .problem-visual {
-      background: var(--color-card); border: 1px solid var(--color-border);
-      border-radius: var(--radius-xl); padding: var(--space-8);
-      font-family: var(--font-mono); font-size: 12px; line-height: 1.8; color: var(--color-text-muted);
+    .problem {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-16);
+      align-items: center;
     }
-    .problem-visual .line-you { color: var(--color-primary-text); font-weight: 600; }
-    .problem-visual .line-agent { color: var(--color-text); }
-    .problem-visual .line-arrow { color: var(--color-text-disabled); padding-left: 16px; }
+
+    @media (max-width: 640px) {
+      .problem { grid-template-columns: 1fr; }
+    }
+
+    .problem-visual {
+      background: var(--color-card);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-xl);
+      padding: var(--space-8);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.8;
+      color: var(--color-text-muted);
+    }
+
+    .problem-visual .line-you {
+      color: var(--color-primary-text);
+      font-weight: 600;
+    }
+
+    .problem-visual .line-agent {
+      color: var(--color-text);
+    }
+
+    .problem-visual .line-arrow {
+      color: var(--color-text-disabled);
+      padding-left: 16px;
+    }
 
     /* ─── HOW IT WORKS ───────────────────────────────────── */
-    .how-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-8); align-items: start; }
-    @media (max-width: 640px) { .how-grid { grid-template-columns: 1fr; } }
+    .how-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-8);
+      align-items: start;
+    }
+
+    @media (max-width: 640px) {
+      .how-grid { grid-template-columns: 1fr; }
+    }
 
     .code-block {
-      background: var(--color-surface); border: 1px solid var(--color-border);
-      border-radius: var(--radius-lg); padding: var(--space-6);
-      font-family: var(--font-mono); font-size: 12.5px; line-height: 1.9;
-      color: var(--color-text-muted); overflow-x: auto;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-6);
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      line-height: 1.9;
+      color: var(--color-text-muted);
+      overflow-x: auto;
     }
 
-    /* ─── FOLDER TREE ────────────────────────────────────── */
-    .file-tree {
-      font-family: var(--font-mono); font-size: 12.5px; line-height: 1.9;
-      list-style: none; color: var(--color-text-muted);
+    .code-block .code-dir {
+      color: var(--color-text);
     }
-    .file-tree li { position: relative; padding-left: 20px; }
-    .file-tree li::before {
-      content: '├─ '; position: absolute; left: 0;
+
+    .code-block .code-inbox {
+      color: var(--color-primary-text);
+    }
+
+    .code-block .code-thread {
+      color: var(--color-info);
+    }
+
+    .code-block .code-comment {
       color: var(--color-text-disabled);
+      font-style: italic;
     }
-    .file-tree li:last-child::before { content: '└─ '; }
-    .file-tree ul { list-style: none; padding-left: 20px; }
-    .file-tree ul li::before { content: '├─ '; }
-    .file-tree ul li:last-child::before { content: '└─ '; }
-    .tree-dir { color: var(--color-text); font-weight: 600; }
-    .tree-inbox { color: var(--color-primary-text); }
-    .tree-thread { color: var(--color-info); }
-    .tree-comment { color: var(--color-text-disabled); font-style: italic; }
 
-    .how-text .section-body { margin-bottom: var(--space-5); }
+    .how-text .section-body {
+      margin-bottom: var(--space-5);
+    }
+
     .protocol-statement {
-      font-size: 15px; font-weight: 600; color: var(--color-text);
-      margin-bottom: var(--space-6); padding: var(--space-4) var(--space-5);
-      background: var(--color-primary-subtle); border-left: 3px solid var(--color-primary);
-      border-radius: 0 var(--radius-md) var(--radius-md) 0; line-height: 1.5;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--color-text);
+      margin-bottom: var(--space-6);
+      padding: var(--space-4) var(--space-5);
+      background: var(--color-primary-subtle);
+      border-left: 3px solid var(--color-primary);
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
+      line-height: 1.5;
     }
 
     /* ─── FOUR PILLARS ───────────────────────────────────── */
-    .pillars-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-6); }
-    @media (max-width: 640px) { .pillars-grid { grid-template-columns: 1fr; } }
+    .pillars-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-6);
+    }
+
+    @media (max-width: 640px) {
+      .pillars-grid { grid-template-columns: 1fr; }
+    }
+
     .pillar-card {
-      background: var(--color-card); border: 1px solid var(--color-border);
-      border-radius: var(--radius-xl); padding: var(--space-8);
+      background: var(--color-card);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-xl);
+      padding: var(--space-8);
       transition: border-color 200ms ease-out, box-shadow 200ms ease-out;
     }
-    .pillar-card:hover { border-color: var(--color-border-strong); box-shadow: var(--shadow-md); }
-    .pillar-icon {
-      width: 36px; height: 36px; border-radius: var(--radius-md);
-      background: var(--color-primary-subtle); display: flex; align-items: center;
-      justify-content: center; margin-bottom: var(--space-5); font-size: 17px;
+
+    .pillar-card:hover {
+      border-color: var(--color-border-strong);
+      box-shadow: var(--shadow-md);
     }
-    .pillar-title { font-size: 15px; font-weight: 600; color: var(--color-text); margin-bottom: var(--space-3); letter-spacing: -0.01em; }
-    .pillar-body { font-size: 14px; color: var(--color-text-muted); line-height: 1.65; }
+
+    .pillar-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-md);
+      background: var(--color-primary-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: var(--space-5);
+      font-size: 17px;
+    }
+
+    .pillar-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--color-text);
+      margin-bottom: var(--space-3);
+      letter-spacing: -0.01em;
+    }
+
+    .pillar-body {
+      font-size: 14px;
+      color: var(--color-text-muted);
+      line-height: 1.65;
+    }
 
     /* ─── COMPARISON TABLE ───────────────────────────────── */
-    .table-wrap { overflow-x: auto; border: 1px solid var(--color-border); border-radius: var(--radius-lg); }
-    table { width: 100%; border-collapse: collapse; font-size: 14px; }
-    thead tr { background: var(--color-surface); }
-    thead th { padding: var(--space-4) var(--space-5); text-align: left; font-weight: 600; font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-text-muted); border-bottom: 1px solid var(--color-border); }
-    thead th:first-child { border-right: 1px solid var(--color-border); }
-    tbody tr { border-bottom: 1px solid var(--color-border); transition: background 150ms ease; }
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    thead tr {
+      background: var(--color-surface);
+    }
+
+    thead th {
+      padding: var(--space-4) var(--space-5);
+      text-align: left;
+      font-weight: 600;
+      font-size: 12px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    thead th:first-child {
+      border-right: 1px solid var(--color-border);
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--color-border);
+      transition: background 150ms ease;
+    }
+
     tbody tr:last-child { border-bottom: none; }
+
     tbody tr:hover { background: var(--color-card-hover); }
-    tbody tr.row-highlight { background: var(--color-primary-subtle); }
-    tbody tr.row-highlight:hover { background: rgba(199,92,42,0.18); }
-    tbody td { padding: var(--space-4) var(--space-5); color: var(--color-text-muted); vertical-align: middle; }
-    tbody td:first-child { color: var(--color-text); font-weight: 500; border-right: 1px solid var(--color-border); white-space: nowrap; }
-    tbody tr.row-highlight td:first-child { color: var(--color-primary-text); }
-    tbody td:not(:first-child) { text-align: center; font-size: 16px; }
+
+    tbody tr.row-highlight {
+      background: var(--color-primary-subtle);
+    }
+
+    tbody tr.row-highlight:hover {
+      background: rgba(199,92,42,0.18);
+    }
+
+    tbody td {
+      padding: var(--space-4) var(--space-5);
+      color: var(--color-text-muted);
+      vertical-align: middle;
+    }
+
+    tbody td:first-child {
+      color: var(--color-text);
+      font-weight: 500;
+      border-right: 1px solid var(--color-border);
+      white-space: nowrap;
+    }
+
+    tbody tr.row-highlight td:first-child {
+      color: var(--color-primary-text);
+    }
+
+    tbody td:not(:first-child) {
+      text-align: center;
+      font-size: 16px;
+    }
+
     .check { color: #22c55e; }
     .cross { color: var(--color-text-disabled); }
     .partial { color: var(--color-warning); font-size: 12px; font-weight: 500; }
 
-    /* ─── CALLOUT ────────────────────────────────────────── */
+    /* ─── OPENAI CALLOUT ─────────────────────────────────── */
     .callout {
-      background: var(--color-card); border: 1px solid var(--color-border);
-      border-radius: var(--radius-xl); padding: var(--space-8) var(--space-10);
-      display: flex; align-items: center; gap: var(--space-8);
+      background: var(--color-card);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-xl);
+      padding: var(--space-8) var(--space-10);
+      display: flex;
+      align-items: center;
+      gap: var(--space-8);
     }
-    @media (max-width: 640px) { .callout { flex-direction: column; gap: var(--space-6); } }
-    .callout-text { flex: 1; }
-    .callout-label { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-text-muted); margin-bottom: var(--space-2); }
-    .callout-headline { font-size: 17px; font-weight: 600; color: var(--color-text); margin-bottom: var(--space-3); }
-    .callout-body { font-size: 14px; color: var(--color-text-muted); line-height: 1.65; }
-    .callout-body a { color: var(--color-primary-text); border-bottom: 1px solid rgba(232,134,90,0.3); }
-    .callout-body a:hover { color: var(--color-primary); border-bottom-color: var(--color-primary); }
-    .callout-badge { font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-primary-text); background: var(--color-primary-subtle); border: 1px solid rgba(199,92,42,0.3); border-radius: var(--radius-full); padding: 4px 12px; white-space: nowrap; flex-shrink: 0; }
 
-    /* ─── FINAL CTA ──────────────────────────────────────── */
-    .cta-section { text-align: center; padding: var(--space-24) 0; }
-    .cta-headline { font-size: clamp(1.5rem, 4vw, 2.2rem); font-weight: 700; letter-spacing: -0.02em; color: var(--color-text); margin-bottom: var(--space-4); }
-    .cta-body { font-size: 16px; color: var(--color-text-muted); margin-bottom: var(--space-10); max-width: 460px; margin-left: auto; margin-right: auto; }
-    .cta-ctas { display: flex; gap: var(--space-4); justify-content: center; flex-wrap: wrap; }
+    @media (max-width: 640px) {
+      .callout { flex-direction: column; gap: var(--space-6); }
+    }
+
+    .callout-text {
+      flex: 1;
+    }
+
+    .callout-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+      margin-bottom: var(--space-2);
+    }
+
+    .callout-headline {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--color-text);
+      margin-bottom: var(--space-3);
+    }
+
+    .callout-body {
+      font-size: 14px;
+      color: var(--color-text-muted);
+      line-height: 1.65;
+    }
+
+    .callout-body a {
+      color: var(--color-primary-text);
+      border-bottom: 1px solid rgba(232,134,90,0.3);
+    }
+
+    .callout-body a:hover {
+      color: var(--color-primary);
+      border-bottom-color: var(--color-primary);
+    }
+
+    .callout-badge {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--color-primary-text);
+      background: var(--color-primary-subtle);
+      border: 1px solid rgba(199,92,42,0.3);
+      border-radius: var(--radius-full);
+      padding: 4px 12px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* ─── FINAL CTA SECTION ──────────────────────────────── */
+    .cta-section {
+      text-align: center;
+      padding: var(--space-24) 0;
+    }
+
+    .cta-headline {
+      font-size: clamp(1.5rem, 4vw, 2.2rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--color-text);
+      margin-bottom: var(--space-4);
+    }
+
+    .cta-body {
+      font-size: 16px;
+      color: var(--color-text-muted);
+      margin-bottom: var(--space-10);
+      max-width: 460px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .cta-ctas {
+      display: flex;
+      gap: var(--space-4);
+      justify-content: center;
+      flex-wrap: wrap;
+    }
 
     /* ─── FOOTER ─────────────────────────────────────────── */
-    footer { border-top: 1px solid var(--color-border); padding: var(--space-8) 0; }
-    .footer-inner { display: flex; align-items: center; justify-content: space-between; gap: var(--space-6); flex-wrap: wrap; }
-    .footer-brand { font-size: 13px; color: var(--color-text-muted); }
-    .footer-brand a { color: var(--color-text-muted); }
+    footer {
+      border-top: 1px solid var(--color-border);
+      padding: var(--space-8) 0;
+    }
+
+    .footer-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-6);
+      flex-wrap: wrap;
+    }
+
+    .footer-brand {
+      font-size: 13px;
+      color: var(--color-text-muted);
+    }
+
+    .footer-brand a {
+      color: var(--color-text-muted);
+    }
+
     .footer-brand a:hover { color: var(--color-text); }
-    .footer-article { font-size: 13px; color: var(--color-text-muted); border-bottom: 1px solid var(--color-border-strong); padding-bottom: 1px; }
-    .footer-article:hover { color: var(--color-text); border-bottom-color: var(--color-primary-text); }
+
+    .footer-article {
+      font-size: 13px;
+      color: var(--color-text-muted);
+      border-bottom: 1px solid var(--color-border-strong);
+      padding-bottom: 1px;
+    }
+
+    .footer-article:hover {
+      color: var(--color-text);
+      border-bottom-color: var(--color-primary-text);
+    }
   </style>
 </head>
 <body>
 
-  <!-- NAV -->
+  <!-- ═══ NAV ════════════════════════════════════════════ -->
   <nav>
     <div class="nav-inner">
       <div class="nav-brand">
@@ -268,7 +676,7 @@
     </div>
   </nav>
 
-  <!-- HERO -->
+  <!-- ═══ HERO ════════════════════════════════════════════ -->
   <header class="hero">
     <div class="container">
       <div class="hero-eyebrow">Open Source Protocol</div>
@@ -281,13 +689,15 @@
         <a class="btn btn-primary" href="https://github.com/theproductpath/agentcomms" target="_blank">View on GitHub →</a>
         <a class="btn btn-ghost" href="https://www.theproductpath.com/article-agentcomms" target="_blank">Read the story</a>
       </div>
-      <div class="hero-image">
-        <img src="agentcomms-landing-hero.png" alt="AgentComms — async agent inbox coordination diagram" />
-      </div>
+
+      <!-- HERO IMAGE -->
+      <img src="hero.png" alt="AgentComms — diagram of async agent inbox coordination" style="width:100%;border-radius:12px;display:block;">
+      <!-- END HERO IMAGE -->
+
     </div>
   </header>
 
-  <!-- PROBLEM -->
+  <!-- ═══ PROBLEM ═════════════════════════════════════════ -->
   <section>
     <hr class="section-divider">
     <div class="container" style="padding-top: var(--space-20);">
@@ -321,7 +731,7 @@
     </div>
   </section>
 
-  <!-- HOW IT WORKS -->
+  <!-- ═══ HOW IT WORKS ════════════════════════════════════ -->
   <section>
     <hr class="section-divider">
     <div class="container" style="padding-top: var(--space-20);">
@@ -338,104 +748,78 @@
             <p>You control the communication layer. Agents don't need to know anything about each other's runtime, language, or framework.</p>
           </div>
         </div>
-
         <div class="code-block" aria-label="AgentComms folder structure example">
-          <ul class="file-tree">
-            <li><span class="tree-dir">agents/</span>
-              <ul>
-                <li><span class="tree-dir">agent-a/</span>
-                  <ul>
-                    <li><span class="tree-inbox">inbox/</span>
-                      <ul>
-                        <li><span class="tree-comment"># unread signals</span></li>
-                        <li><span class="tree-dir">processed/</span>
-                          <ul>
-                            <li><span class="tree-comment"># done — stays on disk</span></li>
-                          </ul>
-                        </li>
-                      </ul>
-                    </li>
-                  </ul>
-                </li>
-                <li><span class="tree-dir">agent-b/</span>
-                  <ul>
-                    <li><span class="tree-inbox">inbox/</span>
-                      <ul>
-                        <li><span class="tree-dir">processed/</span></li>
-                      </ul>
-                    </li>
-                  </ul>
-                </li>
-              </ul>
-            </li>
-            <li><span class="tree-dir">threads/</span>
-              <ul>
-                <li><span class="tree-thread">2026-03-29_expense-report/</span>
-                  <ul>
-                    <li>brief.md</li>
-                    <li>response.md</li>
-                    <li>result.md</li>
-                  </ul>
-                </li>
-                <li><span class="tree-thread">2026-03-29_qa-review/</span>
-                  <ul>
-                    <li>brief.md</li>
-                    <li>feedback.md</li>
-                    <li>sign-off.md</li>
-                  </ul>
-                </li>
-              </ul>
-            </li>
-            <li><span class="tree-dir">archive/</span>
-              <ul>
-                <li><span class="tree-comment"># completed threads move here</span></li>
-              </ul>
-            </li>
-          </ul>
-        </div>
+<span class="code-dir">agents/</span>
+  <span class="code-dir">agent-a/</span>
+    <span class="code-inbox">inbox/</span>
+      <span class="code-comment">  # unread messages</span>
+      processed/
+        <span class="code-comment">  # done — stays on disk</span>
+  <span class="code-dir">agent-b/</span>
+    <span class="code-inbox">inbox/</span>
+      processed/
 
+<span class="code-dir">threads/</span>
+  <span class="code-thread">2026-03-29_expense-report/</span>
+    message-001.md
+    message-002.md
+    response-001.md
+  <span class="code-thread">2026-03-29_qa-review/</span>
+    brief.md
+    feedback.md
+    sign-off.md
+
+<span class="code-comment"># Everything is here. Always.</span>
+<span class="code-comment"># No dashboard needed.</span>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- FOUR PILLARS -->
+  <!-- ═══ FOUR PILLARS ════════════════════════════════════ -->
   <section>
     <hr class="section-divider">
     <div class="container" style="padding-top: var(--space-20);">
       <div class="section-label" style="margin-bottom: var(--space-4);">Why it works</div>
       <h2 class="section-heading" style="margin-bottom: var(--space-10);">Four reasons you want this.</h2>
       <div class="pillars-grid">
+
         <div class="pillar-card">
           <div class="pillar-icon">⏳</div>
           <div class="pillar-title">Async by default.</div>
           <div class="pillar-body">Your agents don't need to run at the same time. Send a message. Go offline. The receiver picks it up independently. Messages persist on disk — no shared runtime means no lost context when a session ends.</div>
         </div>
+
         <div class="pillar-card">
           <div class="pillar-icon">📄</div>
           <div class="pillar-title">Human-readable at every step.</div>
           <div class="pillar-body">Plain markdown files. Any person — engineer, product manager, auditor — can read the full communication history without dashboards, decoders, or API access. No observability infrastructure needed.</div>
         </div>
+
         <div class="pillar-card">
           <div class="pillar-icon">🪪</div>
           <div class="pillar-title">Built-in identity. Built-in history.</div>
           <div class="pillar-body"><code style="font-family: var(--font-mono); font-size: 12px; color: var(--color-primary-text);">agents/&lt;name&gt;/inbox/</code> makes participants legible from the file tree. Every message is timestamped, attributed, and preserved. The inbox/processed structure is a natural, chronological audit trail.</div>
         </div>
+
         <div class="pillar-card">
           <div class="pillar-icon">🔌</div>
           <div class="pillar-title">Works with any framework.</div>
           <div class="pillar-body">LangGraph, CrewAI, AutoGen, custom scripts, Claude projects, GPT agents, local models — doesn't matter. If it can read and write files, it's in the network.</div>
         </div>
+
       </div>
     </div>
   </section>
 
-  <!-- COMPARISON TABLE -->
+  <!-- ═══ COMPARISON TABLE ════════════════════════════════ -->
   <section>
     <hr class="section-divider">
     <div class="container--wide" style="padding-top: var(--space-20);">
       <div class="section-label" style="margin-bottom: var(--space-4);">The comparison</div>
       <h2 class="section-heading" style="margin-bottom: var(--space-3);">Nothing else delivers all five.</h2>
       <p class="section-body" style="margin-bottom: var(--space-8);">AgentComms is the only lightweight agent coordination approach that is simultaneously async, human-readable, cross-framework, durable, and auditable. Everything else trades one of these off.</p>
+
       <div class="table-wrap">
         <table>
           <thead>
@@ -495,7 +879,7 @@
     </div>
   </section>
 
-  <!-- OPENCLAW CALLOUT -->
+  <!-- ═══ OPENCLAW CALLOUT ═════════════════════════════════ -->
   <section>
     <div class="container">
       <div class="callout">
@@ -511,7 +895,7 @@
     </div>
   </section>
 
-  <!-- FINAL CTA -->
+  <!-- ═══ FINAL CTA ════════════════════════════════════════ -->
   <section class="cta-section">
     <div class="container">
       <h2 class="cta-headline">Stop being the relay.</h2>
@@ -523,7 +907,7 @@
     </div>
   </section>
 
-  <!-- FOOTER -->
+  <!-- ═══ FOOTER ═══════════════════════════════════════════ -->
   <footer>
     <div class="container footer-inner">
       <div class="footer-brand">
