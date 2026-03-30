@@ -71,13 +71,26 @@ To add your own agents, see [Adding an Agent](#adding-an-agent).
 
 ### Want to see a full multi-agent run?
 
-If you're running AgentComms with OpenClaw, there's a live demo in `implementations/openclaw/` — a three-agent Research & Write team (Vera, Jin, and Ash) that you can activate and watch run end-to-end:
+If you're running AgentComms with OpenClaw, there's a live demo in `implementations/openclaw/` — a three-agent Research & Write team (Vera, Jin, and Ash) that runs a real research and writing mission end-to-end.
+
+**Prerequisites:** OpenClaw installed and at least one agent registered with a model (`openclaw agents list` to check).
 
 ```bash
+# 1. Load the demo — sets up agents, creates the mission thread, drops the brief
 bash implementations/openclaw/run-demo.sh
+
+# 2. The script tells you exactly what to run next, but it will be:
+bash AgentComms/scripts/wake.sh vera "Check your inbox — your mission brief is waiting."
 ```
 
-See [`implementations/openclaw/README.md`](./implementations/openclaw/README.md) for what it does and what you need set up first.
+`run-demo.sh` is verbose — it walks you through each step and tells you what's happening. When it finishes, it prints the exact `wake.sh` command to fire. After that, go dark and watch the dashboard.
+
+To reset when done:
+```bash
+bash AgentComms/scripts/reset.sh
+```
+
+Full details: [`implementations/openclaw/README.md`](./implementations/openclaw/README.md)
 
 ---
 
