@@ -458,8 +458,11 @@ function parseThread(threadPath, folder, zone) {
 
   // Build file objects with path and mtime
   const fileObjects = files.filter(f =>
-    f.endsWith('.md') || f.endsWith('.png') || f.endsWith('.jpg') ||
-    f.endsWith('.jpeg') || f.endsWith('.gif') || f.endsWith('.webp') || f.endsWith('.svg')
+    f.endsWith('.md')   || f.endsWith('.txt')  ||
+    f.endsWith('.html') || f.endsWith('.htm')  ||
+    f.endsWith('.png')  || f.endsWith('.jpg')  ||
+    f.endsWith('.jpeg') || f.endsWith('.gif')  ||
+    f.endsWith('.webp') || f.endsWith('.svg')
   ).map(f => {
     const fp = path.join(threadPath, f);
     const s  = safeStat(fp);

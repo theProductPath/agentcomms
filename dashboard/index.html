@@ -1204,7 +1204,7 @@ function openShelf(slug) {
   const fileList = document.getElementById('shelf-file-list');
   fileList.innerHTML = thread.files.map(f => {
     const ext  = f.name.split('.').pop().toLowerCase();
-    const icon = ext === 'md' ? '📄' : (ext.match(/png|jpg|gif|svg/) ? '🖼' : '📎');
+    const icon = ext === 'md' ? '📄' : ext.match(/png|jpg|jpeg|gif|svg|webp/) ? '🖼' : ext.match(/html?/) ? '🌐' : '📎';
     const age  = f.mtime ? relativeTime(f.mtime) : '';
     return `<div class="shelf-file-item" id="sfi-${encodeId(f.name)}" onclick="viewShelfFile('${escStr(f.name)}', '${escStr(f.path)}')">
       <span class="shelf-file-icon">${icon}</span>
