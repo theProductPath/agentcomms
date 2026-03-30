@@ -360,7 +360,7 @@ function scanAgentComms(instancePath) {
   const threads = [];
 
   function scanThreadDir(dirPath, zone) {
-    for (const slug of safeReadDir(dirPath).sort()) {
+    for (const slug of safeReadDir(dirPath).sort().reverse()) {
       const tp   = path.join(dirPath, slug);
       const stat = safeStat(tp);
       if (!stat || !stat.isDirectory()) continue;
