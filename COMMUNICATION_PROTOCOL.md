@@ -107,14 +107,22 @@ To ask a question: write the Q&A file in the thread folder, then drop a routing 
 
 ### 4. Done = Archived
 
-A thread is not done until it's in `archive/`.
+A thread is not done until it's in the **top-level `archive/` folder**.
+
+✅ Correct path:  `archive/YYYY-MM-DD_slug/`
+❌ Wrong path:    `threads/archive/YYYY-MM-DD_slug/`  ← this should never exist
 
 **The done sequence:**
 1. Write `result.md` in the thread folder (the actual deliverable or summary)
 2. Update `status.md` to `status: done`
-3. Move the thread folder: `mv threads/YYYY-MM-DD_slug/ archive/YYYY-MM-DD_slug/`
+3. Move the thread folder to the top-level archive:
+   ```
+   mv threads/YYYY-MM-DD_slug/  archive/YYYY-MM-DD_slug/
+   ```
 
 The archive is institutional memory. Nothing is ever deleted from it.
+
+**Who owns the status?** The agent who created the thread owns `status.md`. Only the thread creator (or the human operator) should mark a thread `done`. If you completed your part but others are still working, update status to `in-progress` with a note — do not mark it `done`.
 
 ---
 

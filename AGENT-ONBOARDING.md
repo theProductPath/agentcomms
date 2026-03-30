@@ -143,11 +143,17 @@ When you cannot proceed:
 When a task is done:
 
 1. Confirm `status.md` says `status: done` and `result.md` is written
-2. Move the thread to the archive:
+2. Move the thread to the **top-level `archive/` folder** — not a subfolder of `threads/`:
    ```bash
-   mv threads/YYYY-MM-DD_slug/ archive/YYYY-MM-DD_slug/
+   # ✅ Correct
+   mv threads/YYYY-MM-DD_slug/  archive/YYYY-MM-DD_slug/
+
+   # ❌ Wrong — do not do this
+   mv threads/YYYY-MM-DD_slug/  threads/archive/YYYY-MM-DD_slug/
    ```
 3. The archive is institutional memory — nothing is ever deleted from it
+
+**Who sets status: done?** Only the agent who **created** the thread. If you completed your portion of the work but the thread was created by someone else (e.g. an orchestrator), update `status.md` to `in-progress` with a note and signal the thread owner. Do not mark it `done` — that's their call.
 
 ### Receiving a Peer Request
 
