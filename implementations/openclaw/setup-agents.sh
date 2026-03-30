@@ -166,22 +166,23 @@ for AGENT in "${AGENTS[@]}"; do
     exit 1
   fi
 
-  # 2. Create OpenClaw workspace directory
-  mkdir -p "$WORKSPACE"
-
-  # 3. Write SOUL.md with placeholder substitution
-  sed \
-    -e "s|{{VERA_INBOX}}|$VERA_INBOX|g" \
-    -e "s|{{JIN_INBOX}}|$JIN_INBOX|g" \
-    -e "s|{{ASH_INBOX}}|$ASH_INBOX|g" \
-    -e "s|{{AGENTCOMMS_ROOT}}|$AC_ROOT|g" \
-    -e "s|{{INBOX_PATH}}|$AC_ROOT/agents/$AGENT/inbox|g" \
-    "$SOUL_SRC" > "$SOUL_DEST"
-
-  ok "$AGENT: SOUL.md written to $SOUL_DEST"
-
-  # 4. Register with OpenClaw (if available and model set)
+  # 2–4. OpenClaw workspace + registration — only if openclaw is available
   if [[ "$OPENCLAW_AVAILABLE" == "true" ]]; then
+    # Create workspace directory
+    mkdir -p "$WORKSPACE"
+
+    # Write SOUL.md with placeholder substitution
+    sed \
+      -e "s|{{VERA_INBOX}}|$VERA_INBOX|g" \
+      -e "s|{{JIN_INBOX}}|$JIN_INBOX|g" \
+      -e "s|{{ASH_INBOX}}|$ASH_INBOX|g" \
+      -e "s|{{AGENTCOMMS_ROOT}}|$AC_ROOT|g" \
+      -e "s|{{INBOX_PATH}}|$AC_ROOT/agents/$AGENT/inbox|g" \
+      "$SOUL_SRC" > "$SOUL_DEST"
+
+    ok "$AGENT: SOUL.md written to $SOUL_DEST"
+
+    # Register with OpenClaw
     if [[ -n "$MODEL" ]]; then
       openclaw agents add "$AGENT" \
         --workspace "$WORKSPACE" \
@@ -191,6 +192,8 @@ for AGENT in "${AGENTS[@]}"; do
     else
       warn "$AGENT: skipping OpenClaw registration (no model set — pass --model to register)"
     fi
+  else
+    info "$AGENT: AgentComms inbox created. Skipping OpenClaw workspace (openclaw not available)."
   fi
 done
 
