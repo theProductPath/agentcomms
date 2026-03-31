@@ -106,10 +106,20 @@
     }
 
     .nav-wordmark {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       font-size: 15px;
       font-weight: 700;
       color: var(--color-text);
       letter-spacing: -0.01em;
+    }
+
+    .nav-wordmark img {
+      width: 22px;
+      height: 22px;
+      border-radius: 5px;
+      flex-shrink: 0;
     }
 
     .nav-wordmark span {
@@ -671,7 +681,7 @@
   <nav>
     <div class="nav-inner">
       <div class="nav-brand">
-        <span class="nav-wordmark">Agent<span>Comms</span></span>
+        <span class="nav-wordmark"><img src="favicon.png" alt="AgentComms">Agent<span>Comms</span></span>
         <span class="nav-by">by <a href="https://www.theproductpath.com" target="_blank">theProductPath</a></span>
       </div>
       <a class="nav-link" href="https://github.com/theproductpath/agentcomms" target="_blank">GitHub →</a>
