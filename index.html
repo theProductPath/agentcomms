@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AgentComms — A mailbox protocol for your agents.</title>
   <meta name="description" content="Async. Human-readable. Works with any framework. No shared runtime required.">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="apple-touch-icon" href="favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -371,7 +373,6 @@
       color: var(--color-text-muted);
       overflow-x: auto;
     }
-    .code-block pre { margin: 0; white-space: pre; font: inherit; }
 
     .code-block .code-dir {
       color: var(--color-text);
@@ -691,9 +692,16 @@
         <a class="btn btn-ghost" href="https://www.theproductpath.com/article-agentcomms" target="_blank">Read the story</a>
       </div>
 
-      <!-- HERO IMAGE -->
-      <img src="hero.png" alt="AgentComms — diagram of async agent inbox coordination" style="width:100%;border-radius:12px;display:block;">
-      <!-- END HERO IMAGE -->
+      <!-- HERO IMAGE — Pixxy replaces this block -->
+      <!-- Pixxy brief: see pixxy-brief.md in this thread folder -->
+      <!-- Swap in: <img src="[path]" alt="AgentComms — diagram of async agent inbox coordination"> -->
+      <div class="hero-image-placeholder">
+        <div class="hero-placeholder-label">
+          <span class="ph-icon">📬</span>
+          Hero image placeholder — Pixxy brief in thread folder
+        </div>
+      </div>
+      <!-- END HERO IMAGE PLACEHOLDER -->
 
     </div>
   </header>
@@ -749,28 +757,30 @@
             <p>You control the communication layer. Agents don't need to know anything about each other's runtime, language, or framework.</p>
           </div>
         </div>
-        <div class="code-block" aria-label="AgentComms folder structure example"><pre><span class="code-dir">agents/</span>
-├── <span class="code-dir">agent-a/</span>
-│   └── <span class="code-inbox">inbox/</span>
-│       ├── <span class="code-comment"># unread signals</span>
-│       └── processed/
-│           └── <span class="code-comment"># done — stays on disk</span>
-└── <span class="code-dir">agent-b/</span>
-    └── <span class="code-inbox">inbox/</span>
-        └── processed/
+        <div class="code-block" aria-label="AgentComms folder structure example">
+<span class="code-dir">agents/</span>
+  <span class="code-dir">agent-a/</span>
+    <span class="code-inbox">inbox/</span>
+      <span class="code-comment">  # unread messages</span>
+      processed/
+        <span class="code-comment">  # done — stays on disk</span>
+  <span class="code-dir">agent-b/</span>
+    <span class="code-inbox">inbox/</span>
+      processed/
 
 <span class="code-dir">threads/</span>
-├── <span class="code-thread">2026-03-29_expense-report/</span>
-│   ├── brief.md
-│   ├── response.md
-│   └── result.md
-└── <span class="code-thread">2026-03-29_qa-review/</span>
-    ├── brief.md
-    ├── feedback.md
-    └── sign-off.md
+  <span class="code-thread">2026-03-29_expense-report/</span>
+    message-001.md
+    message-002.md
+    response-001.md
+  <span class="code-thread">2026-03-29_qa-review/</span>
+    brief.md
+    feedback.md
+    sign-off.md
 
-<span class="code-dir">archive/</span>
-└── <span class="code-comment"># completed threads move here</span></pre></div>
+<span class="code-comment"># Everything is here. Always.</span>
+<span class="code-comment"># No dashboard needed.</span>
+        </div>
       </div>
     </div>
   </section>
