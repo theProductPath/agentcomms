@@ -1,1 +1,14 @@
-[{"key":"default","name":"AgentComms","path":"/Users/jonestrebski/Library/CloudStorage/GoogleDrive-jonestrebski@gmail.com/My Drive/AI-Collab/tPP/Products/AgentComms","builtin":true}]
+[
+  {
+    "key": "tpp",
+    "name": "Home Office",
+    "path": "/Users/jonestrebski/Library/CloudStorage/GoogleDrive-jonestrebski@gmail.com/My Drive/tPP/AgentComms",
+    "builtin": false
+  },
+  {
+    "key": "it-comms",
+    "name": "IT-Comms",
+    "path": "/Users/jonestrebski/Library/CloudStorage/GoogleDrive-jonestrebski@gmail.com/My Drive/IT-Comms",
+    "mailboxId": "it-comms"
+  }
+]
