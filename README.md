@@ -1,6 +1,18 @@
+---
+type: folder-readme-item
+folder: agentcomms
+status: active
+last-updated: 2026-05-13
+maintainer: Steven Jones
+purpose: AgentComms — a structured file-system communication layer for agent teams. Local folder structure with inboxes, threads, and archive for direct agent coordination.
+---
+
 # AgentComms
 
 **A structured file-system communication layer for agent teams.**
+
+**Public landing page:** <a href="https://agentcomms.theproductpath.com/" target="_blank" rel="noopener noreferrer">agentcomms.theproductpath.com</a>
+
 `agentcomms-version: 1`
 Most agent teams hit the same problem: every handoff routes through a human. The human becomes the relay — forwarding context, re-explaining tasks, translating between agents. AgentComms removes that bottleneck. It's a local folder structure (inboxes, threads, archive) plus an optional dashboard that agents use to coordinate directly. No cloud, no npm, no build step — just a shell script and a folder convention that works out of the box.
 
