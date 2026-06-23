@@ -474,6 +474,7 @@ function parseThread(threadPath, folder, zone) {
 
   return {
     slug:         folder,
+    path:         threadPath,
     zone,
     status,
     date:         folder.substring(0, 10),
@@ -975,6 +976,31 @@ function handleRequest(req, res) {
     }).catch(e => {
       res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
       res.end(JSON.stringify({ ok: false, error: e.message }));
+    });
+    return;
+  }
+
+  // ── Open in Finder ──
+  if (pathname === '/api/open-finder' && req.method === 'POST') {
+    readBody(req).then(body => {
+      const folderPath = body.path;
+      if (!folderPath || !isPathSafe(folderPath)) {
+        res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ ok: false, error: 'Invalid path' }));
+        return;
+      }
+      require('child_process').exec(`open "${folderPath}"`, (err) => {
+        if (err) {
+          res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ ok: false, error: err.message }));
+        } else {
+          res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ ok: true }));
+        }
+      });
+    }).catch(e => {
+      res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ ok: false, error: e.message || 'Error processing request' }));
     });
     return;
   }

@@ -1201,7 +1201,7 @@ function renderThreads() {
 
   let threads = state.threads.slice();
   if (threadFilter === 'active') {
-    threads = threads.filter(t => t.status !== 'done' && t.status !== 'archived' && t.zone !== 'archive');
+    threads = threads.filter(t => t.zone === 'threads');
   }
 
   threads.sort((a, b) => {
@@ -1252,7 +1252,8 @@ function openShelf(slug) {
     `<span class="status-pill status-${thread.status}">${thread.status}</span>` +
     `<span class="shelf-meta-item">${thread.date}</span>` +
     `<span class="shelf-meta-item">· ${thread.lastActive}</span>` +
-    `<span class="shelf-meta-item">· ${zoneLabel}</span>`;
+    `<span class="shelf-meta-item">· ${zoneLabel}</span>` +
+    `<button class="view-btn" style="margin-left: auto; padding: 3px 8px; font-size: 11px;" onclick="event.stopPropagation(); openInFinder('${escStr(thread.path)}')">📂 Open in Finder</button>`;
 
   const fileList = document.getElementById('shelf-file-list');
   fileList.innerHTML = thread.files.map(f => {
@@ -1273,6 +1274,20 @@ function openShelf(slug) {
 
   closeFileViewer();
   document.getElementById('thread-shelf').classList.add('open');
+}
+
+async function openInFinder(folderPath) {
+  try {
+    const res = await fetch('/api/open-finder', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: folderPath })
+    });
+    const data = await res.json();
+    if (!data.ok) console.error('Failed to open finder:', data.error);
+  } catch (err) {
+    console.error('Error calling /api/open-finder:', err);
+  }
 }
 
 function toggleShelf() {

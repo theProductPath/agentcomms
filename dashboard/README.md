@@ -128,6 +128,7 @@ The dashboard supports multiple AgentComms instances via the instance dropdown i
 | `POST /instances/add` | Adds a new instance to instances.json |
 | `POST /instances/remove` | Removes a non-builtin instance |
 | `POST /switch-instance` | Rewires the server-side file watcher to a new instance |
+| `POST /api/open-finder` | Opens the given path in macOS Finder (path-constrained) |
 | `GET /file?path=<path>` | Serves a file — path-constrained to known instance folders |
 | `POST /shutdown` | Cleanly shuts down the dashboard server |
 
