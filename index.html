@@ -710,6 +710,39 @@
     .footer-links a { color: var(--color-text-muted); }
     .footer-links a:hover { color: var(--color-text); text-decoration: none; }
     .footer-links .current { color: var(--color-text); font-weight: 600; }
+
+    /* ─── LIGHT SECTION (dark + light rhythm) ────────────── */
+    .section--light {
+      background: #f0ede8;
+      padding: 64px 0;
+      border-top: 1px solid #e5e2dd;
+      border-bottom: 1px solid #e5e2dd;
+    }
+    .section--light > .section-divider { display: none; }
+    .section--light .section-label { color: #b4541f; }
+    .section--light .section-heading { color: #1f2937; }
+    .section--light .section-body { color: #374151; }
+    .section--light .section-body strong { color: #1f2937; }
+    /* how-it-works protocol statement on light (code block stays dark) */
+    .section--light .protocol-statement {
+      background: #ffffff;
+      color: #1f2937;
+      border-left-color: #c75c2a;
+    }
+    /* comparison table on light */
+    .section--light .table-wrap { border-color: #e5e2dd; background: #ffffff; }
+    .section--light thead tr { background: #f0ede8; }
+    .section--light thead th { color: #6b7280; border-bottom-color: #e5e2dd; }
+    .section--light thead th:first-child { border-right-color: #e5e2dd; }
+    .section--light tbody tr { border-bottom-color: #e5e2dd; }
+    .section--light tbody td { color: #374151; }
+    .section--light tbody td:first-child { color: #1f2937; border-right-color: #e5e2dd; }
+    .section--light tbody tr:hover { background: #f7f4ef; }
+    .section--light tbody tr.row-highlight { background: rgba(199,92,42,0.10); }
+    .section--light tbody tr.row-highlight:hover { background: rgba(199,92,42,0.16); }
+    .section--light tbody tr.row-highlight td:first-child { color: #b4541f; }
+    .section--light .cross { color: #9ca3af; }
+    .section--light .partial { color: #b45309; }
   </style>
 </head>
 <body>
@@ -796,7 +829,7 @@
   </section>
 
   <!-- ═══ HOW IT WORKS ════════════════════════════════════ -->
-  <section>
+  <section class="section--light">
     <hr class="section-divider">
     <div class="container" >
       <div class="section-label" style="margin-bottom: var(--space-4);">How it works</div>
@@ -877,7 +910,7 @@
   </section>
 
   <!-- ═══ COMPARISON TABLE ════════════════════════════════ -->
-  <section>
+  <section class="section--light">
     <hr class="section-divider">
     <div class="container--wide" >
       <div class="section-label" style="margin-bottom: var(--space-4);">The comparison</div>
