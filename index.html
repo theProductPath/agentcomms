@@ -433,7 +433,7 @@
       font-family: var(--font-mono);
       font-size: 12.5px;
       line-height: 1.9;
-      color: var(--color-text-muted);
+      color: var(--color-text);
       overflow-x: auto;
       white-space: pre;
       tab-size: 2;
@@ -452,7 +452,7 @@
     }
 
     .code-block .code-comment {
-      color: var(--color-text-disabled);
+      color: var(--color-text-muted);
       font-style: italic;
     }
 
@@ -507,6 +507,8 @@
       margin-bottom: var(--space-5);
       font-size: 17px;
     }
+
+    .pillar-icon svg { width: 20px; height: 20px; display: block; }
 
     .pillar-title {
       font-size: 15px;
@@ -882,25 +884,25 @@
       <div class="pillars-grid">
 
         <div class="pillar-card">
-          <div class="pillar-icon">⏳</div>
+          <div class="pillar-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#e8865a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></svg></div>
           <div class="pillar-title">Async by default.</div>
           <div class="pillar-body">Your agents don't need to run at the same time. Send a message. Go offline. The receiver picks it up independently. Messages persist on disk — no shared runtime means no lost context when a session ends.</div>
         </div>
 
         <div class="pillar-card">
-          <div class="pillar-icon">📄</div>
+          <div class="pillar-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#e8865a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v5h5"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg></div>
           <div class="pillar-title">Human-readable at every step.</div>
           <div class="pillar-body">Plain markdown files. Any person — engineer, product manager, auditor — can read the full communication history without dashboards, decoders, or API access. No observability infrastructure needed.</div>
         </div>
 
         <div class="pillar-card">
-          <div class="pillar-icon">🪪</div>
+          <div class="pillar-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#e8865a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M16 10h2"/><path d="M16 14h2"/><path d="M6.17 15a3 3 0 0 1 5.66 0"/><circle cx="9" cy="11" r="2"/></svg></div>
           <div class="pillar-title">Built-in identity. Built-in history.</div>
           <div class="pillar-body"><code style="font-family: var(--font-mono); font-size: 12px; color: var(--color-primary-text);">agents/&lt;name&gt;/inbox/</code> makes participants legible from the file tree. Every message is timestamped, attributed, and preserved. The inbox/processed structure is a natural, chronological audit trail.</div>
         </div>
 
         <div class="pillar-card">
-          <div class="pillar-icon">🔌</div>
+          <div class="pillar-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#e8865a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/></svg></div>
           <div class="pillar-title">Works with any framework.</div>
           <div class="pillar-body">LangGraph, CrewAI, AutoGen, custom scripts, Claude projects, GPT agents, local models — doesn't matter. If it can read and write files, it's in the network.</div>
         </div>
@@ -981,13 +983,12 @@
     <div class="container">
       <div class="callout">
         <div class="callout-text">
-          <div class="callout-label">Built on</div>
-          <div class="callout-headline">OpenClaw. Works everywhere.</div>
+          <div class="callout-label">Platform agnostic</div>
+          <div class="callout-headline">Built on OpenClaw. Works everywhere.</div>
           <div class="callout-body">
             AgentComms was built on <a href="https://openclaw.com" target="_blank">OpenClaw</a>, an open AI orchestration platform with real builder traction. But the protocol is platform-agnostic by design — any agent, any runtime, any stack.
           </div>
         </div>
-        <div class="callout-badge">Platform-agnostic</div>
       </div>
     </div>
   </section>
