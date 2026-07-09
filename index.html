@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AgentComms — A mailbox protocol for your agents.</title>
   <meta name="description" content="Async. Human-readable. Works with any framework. No shared runtime required.">
-  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -148,6 +148,58 @@
     }
 
     .nav-link:hover { color: var(--color-text); }
+
+    /* ─── STANDARD HEADER ────────────────────────────────── */
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+      gap: var(--space-6);
+    }
+    .brand-lockup {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand-mark {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .brand-mark:hover { text-decoration: none; }
+    .brand-name {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--color-text);
+    }
+    .brand-name .accent { color: var(--color-primary); }
+    .brand-div {
+      width: 1px;
+      height: 22px;
+      background: var(--color-border);
+      flex-shrink: 0;
+    }
+    .brand-wordmark {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--color-text);
+      white-space: nowrap;
+    }
+    .brand-wordmark .accent { color: var(--color-primary); }
+    .header-ctas {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header-ctas .btn { padding: 8px 16px; font-size: 13px; }
+    @media (max-width: 640px) {
+      .brand-div, .brand-wordmark { display: none; }
+      .header-ctas .btn-ghost { display: none; }
+    }
 
     /* ─── HERO ───────────────────────────────────────────── */
     .hero {
@@ -638,54 +690,53 @@
       flex-wrap: wrap;
     }
 
-    /* ─── FOOTER ─────────────────────────────────────────── */
+    /* ─── COMMON FOOTER ──────────────────────────────────── */
     footer {
+      background: #12161d;
       border-top: 1px solid var(--color-border);
-      padding: var(--space-8) 0;
+      padding: 30px 0;
     }
-
     .footer-inner {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: var(--space-6);
+      gap: 18px;
       flex-wrap: wrap;
     }
-
-    .footer-brand {
-      font-size: 13px;
-      color: var(--color-text-muted);
-    }
-
-    .footer-brand a {
-      color: var(--color-text-muted);
-    }
-
-    .footer-brand a:hover { color: var(--color-text); }
-
-    .footer-article {
-      font-size: 13px;
-      color: var(--color-text-muted);
-      border-bottom: 1px solid var(--color-border-strong);
-      padding-bottom: 1px;
-    }
-
-    .footer-article:hover {
-      color: var(--color-text);
-      border-bottom-color: var(--color-primary-text);
-    }
+    .footer-brand { font-size: 14px; font-weight: 600; color: var(--color-text); }
+    .footer-brand .footer-tpp { color: var(--color-text-muted); font-weight: 400; }
+    .footer-copy { font-size: 12px; color: var(--color-text-muted); margin-top: 5px; }
+    .footer-links { display: flex; flex-wrap: wrap; gap: 18px; font-size: 13px; }
+    .footer-links a { color: var(--color-text-muted); }
+    .footer-links a:hover { color: var(--color-text); text-decoration: none; }
+    .footer-links .current { color: var(--color-text); font-weight: 600; }
   </style>
 </head>
 <body>
 
   <!-- ═══ NAV ════════════════════════════════════════════ -->
   <nav>
-    <div class="nav-inner">
-      <div class="nav-brand">
-        <span class="nav-wordmark"><img src="favicon.png" alt="AgentComms">Agent<span>Comms</span></span>
-        <span class="nav-by">by <a href="https://www.theproductpath.com" target="_blank">theProductPath</a></span>
+    <div class="container--wide header-inner">
+      <div class="brand-lockup">
+        <a class="brand-mark" href="/" aria-label="AgentComms — home">
+          <svg viewBox="0 0 256 256" width="30" height="30" aria-hidden="true">
+            <rect x="6" y="6" width="244" height="244" rx="50" fill="#ffffff" stroke="#e5e2dd" stroke-width="2"/>
+            <rect x="58" y="122" width="140" height="82" rx="12" fill="none" stroke="#c75c2a" stroke-width="9"/>
+            <path d="M63 129 L128 170 L193 129" fill="none" stroke="#c75c2a" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+            <g transform="translate(126,80) scale(2.7) translate(-12,-12)" fill="none" stroke="#c75c2a" stroke-width="2.9" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="4"/>
+              <path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0 -4 8"/>
+            </g>
+          </svg>
+          <span class="brand-name">Agent<span class="accent">Comms</span></span>
+        </a>
+        <span class="brand-div" aria-hidden="true"></span>
+        <span class="brand-wordmark"><span>THE</span><span class="accent">PRODUCT</span><span>PATH</span></span>
       </div>
-      <a class="nav-link" href="https://github.com/theproductpath/agentcomms" target="_blank">GitHub →</a>
+      <div class="header-ctas">
+        <a class="btn btn-primary" href="https://www.theproductpath.com/contact" target="_blank" rel="noopener">Schedule a call</a>
+        <a class="btn btn-ghost" href="https://github.com/theProductPath/agentcomms" target="_blank" rel="noopener">Download from GitHub</a>
+      </div>
     </div>
   </nav>
 
@@ -922,13 +973,18 @@
 
   <!-- ═══ FOOTER ═══════════════════════════════════════════ -->
   <footer>
-    <div class="container footer-inner">
-      <div class="footer-brand">
-        AgentComms — <a href="https://www.theproductpath.com" target="_blank">theProductPath</a>
+    <div class="container--wide footer-inner">
+      <div>
+        <div class="footer-brand">AgentComms <span class="footer-tpp">· theProductPath</span></div>
+        <div class="footer-copy">© 2026 theProductPath. All rights reserved.</div>
       </div>
-      <a class="footer-article" href="https://www.theproductpath.com/article-agentcomms" target="_blank">
-        Read the story behind AgentComms →
-      </a>
+      <nav class="footer-links">
+        <a href="https://airs.theproductpath.com/" target="_blank" rel="noopener">AIRS</a>
+        <a href="https://acos.theproductpath.com/" target="_blank" rel="noopener">ACOS</a>
+        <a href="https://talent-cycle.theproductpath.com/" target="_blank" rel="noopener">Talent Cycle</a>
+        <a href="https://burner-apps.theproductpath.com/" target="_blank" rel="noopener">Burner Apps</a>
+        <span class="current">AgentComms</span>
+      </nav>
     </div>
   </footer>
 
