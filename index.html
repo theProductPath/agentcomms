@@ -409,7 +409,7 @@
     }
 
     .problem-visual .line-arrow {
-      color: var(--color-text-disabled);
+      color: var(--color-text-muted);
       padding-left: 16px;
     }
 
@@ -435,6 +435,8 @@
       line-height: 1.9;
       color: var(--color-text-muted);
       overflow-x: auto;
+      white-space: pre;
+      tab-size: 2;
     }
 
     .code-block .code-dir {
@@ -845,8 +847,7 @@
             <p>You control the communication layer. Agents don't need to know anything about each other's runtime, language, or framework.</p>
           </div>
         </div>
-        <div class="code-block" aria-label="AgentComms folder structure example">
-<span class="code-dir">agents/</span>
+        <div class="code-block" aria-label="AgentComms folder structure example"><span class="code-dir">agents/</span>
   <span class="code-dir">agent-a/</span>
     <span class="code-inbox">inbox/</span>
       <span class="code-comment">  # unread messages</span>
@@ -867,8 +868,7 @@
     sign-off.md
 
 <span class="code-comment"># Everything is here. Always.</span>
-<span class="code-comment"># No dashboard needed.</span>
-        </div>
+<span class="code-comment"># No dashboard needed.</span></div>
       </div>
     </div>
   </section>
@@ -915,7 +915,7 @@
     <div class="container--wide" >
       <div class="section-label" style="margin-bottom: var(--space-4);">The comparison</div>
       <h2 class="section-heading" style="margin-bottom: var(--space-3);">Nothing else delivers all five.</h2>
-      <p class="section-body" style="margin-bottom: var(--space-8);">AgentComms is the only lightweight agent coordination approach that is simultaneously async, human-readable, cross-framework, durable, and auditable. Everything else trades one of these off.</p>
+      <p class="section-body" style="margin-bottom: var(--space-8); max-width: none;">AgentComms is the only lightweight agent coordination approach that is simultaneously async, human-readable, cross-framework, durable, and auditable. Everything else trades one of these off.</p>
 
       <div class="table-wrap">
         <table>
